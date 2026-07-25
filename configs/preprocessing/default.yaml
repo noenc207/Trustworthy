@@ -1,0 +1,86 @@
+preprocessing:
+  # Metadata and logging configuration
+  metadata:
+    track_metadata: true
+    save_metadata: true
+    metadata_dir: "outputs/preprocessing/metadata"
+    save_visualizations: true
+
+  # Training pipeline with augmentation
+  train:
+    - name: "resize"
+      params: 
+        height: 224
+        width: 224
+      enabled: true
+    - name: "dull_razor"
+      params: 
+        filter_size: 5
+      enabled: true
+    - name: "color_constancy"
+      params: {}
+      enabled: true
+    - name: "clahe"
+      params:
+        clip_limit: 2.0
+        tile_grid_size: [8, 8]
+        p: 0.8
+      enabled: true
+    - name: "horizontal_flip"
+      params:
+        p: 0.5
+      enabled: true
+    - name: "normalize"
+      params: 
+        mean: [0.763, 0.546, 0.570]
+        std: [0.141, 0.152, 0.169]
+      enabled: true
+    - name: "to_tensor"
+      params: {}
+      enabled: true
+
+  # Validation pipeline (no augmentation)
+  val:
+    - name: "resize"
+      params: 
+        height: 224
+        width: 224
+      enabled: true
+    - name: "dull_razor"
+      params: 
+        filter_size: 5
+      enabled: true
+    - name: "color_constancy"
+      params: {}
+      enabled: true
+    - name: "normalize"
+      params: 
+        mean: [0.763, 0.546, 0.570]
+        std: [0.141, 0.152, 0.169]
+      enabled: true
+    - name: "to_tensor"
+      params: {}
+      enabled: true
+
+  # Inference pipeline (no augmentation)
+  inference:
+    - name: "resize"
+      params: 
+        height: 224
+        width: 224
+      enabled: true
+    - name: "dull_razor"
+      params: 
+        filter_size: 5
+      enabled: true
+    - name: "color_constancy"
+      params: {}
+      enabled: true
+    - name: "normalize"
+      params: 
+        mean: [0.763, 0.546, 0.570]
+        std: [0.141, 0.152, 0.169]
+      enabled: true
+    - name: "to_tensor"
+      params: {}
+      enabled: true

@@ -1,0 +1,7 @@
+image_id,class_id,class_name,path
+ISIC_001,0,mel,D:\Trustworthy\data\test_dataset_v2\raw\ISIC_001.jpg
+ISIC_002,1,nv,D:\Trustworthy\data\test_dataset_v2\raw\ISIC_002.jpg
+ISIC_003,2,bcc,D:\Trustworthy\data\test_dataset_v2\raw\ISIC_003.jpg
+ISIC_004,0,mel,D:\Trustworthy\data\test_dataset_v2\raw\ISIC_004.jpg
+ISIC_005,1,nv,D:\Trustworthy\data\test_dataset_v2\raw\ISIC_005.jpg
+ISIC_006,2,bcc,D:\Trustworthy\data\test_dataset_v2\raw\ISIC_006.jpg

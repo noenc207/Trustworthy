@@ -1,0 +1,105 @@
+# ============================================================
+# Trustworthy Skin Cancer AI Platform — pre-commit configuration
+# ============================================================
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # ──────────────────────────────────────────────────────────
+  # Standard pre-commit hooks
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-toml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=5000"]
+      - id: detect-private-key
+      - id: debug-statements
+      - id: mixed-line-ending
+        args: ["--fix=lf"]
+      - id: no-commit-to-branch
+        args: ["--branch=main", "--branch=release"]
+
+  # ──────────────────────────────────────────────────────────
+  # Ruff — Linting + Import Sorting
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.7
+    hooks:
+      - id: ruff
+        args: ["--fix", "--exit-non-zero-on-fix"]
+      - id: ruff-format
+
+  # ──────────────────────────────────────────────────────────
+  # Black — Code Formatter
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/psf/black
+    rev: 24.3.0
+    hooks:
+      - id: black
+        language_version: python3.12
+
+  # ──────────────────────────────────────────────────────────
+  # isort — Import Sorting (complements Ruff)
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (python)
+
+  # ──────────────────────────────────────────────────────────
+  # MyPy — Static Type Checking
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.9.0
+    hooks:
+      - id: mypy
+        args: ["--ignore-missing-imports", "--no-strict-optional"]
+        additional_dependencies:
+          - "pydantic>=2.6.0"
+          - "types-redis"
+          - "types-requests"
+          - "types-passlib"
+
+  # ──────────────────────────────────────────────────────────
+  # Commitizen — Conventional Commits Enforcement
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.21.3
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+  # ──────────────────────────────────────────────────────────
+  # Secrets Detection
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+
+  # ──────────────────────────────────────────────────────────
+  # YAML Lint
+  # ──────────────────────────────────────────────────────────
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: ["-d", "relaxed"]
+
+default_language_version:
+  python: python3.12
+
+ci:
+  autofix_prs: true
+  autoupdate_schedule: weekly

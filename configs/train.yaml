@@ -1,0 +1,19 @@
+# Default training configuration
+# Hydra base config
+defaults:
+  - dataset: ham10000
+  - model: efficientnet_b4
+  - optimizer: adamw
+  - scheduler: cosine_annealing
+  - trainer: default
+  - logging: tensorboard
+  - experiment: default
+  - augmentation: standard
+  - _self_
+
+seed: 42
+use_wandb: false
+
+mlflow:
+  tracking_uri: http://localhost:5000
+  experiment_name: skin_cancer_ai_training

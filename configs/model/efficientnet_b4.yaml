@@ -1,0 +1,16 @@
+# EfficientNet-B4 Model Configuration
+_target_: src.modules.classification.classifier.SkinLesionClassifier
+
+backbone: efficientnet_b4
+num_classes: 7
+pretrained: true
+drop_rate: 0.3
+
+input_size: 380   # EfficientNet-B4 native resolution
+
+# Inference settings
+test_time_augmentation: false
+tta_transforms: 5   # Number of TTA transforms if enabled
+
+# Export settings
+onnx_opset: 17

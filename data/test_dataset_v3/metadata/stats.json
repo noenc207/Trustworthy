@@ -1,0 +1,10 @@
+{
+    "dataset_name": "test_dataset_v3",
+    "version": "v1.0",
+    "total_images": 60,
+    "class_distribution": {
+        "mel": 20,
+        "nv": 20,
+        "bcc": 20
+    }
+}

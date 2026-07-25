@@ -1,0 +1,16 @@
+dataset:
+  name: "ham10000"
+  base_path: "data/ham10000"
+  version: "v1.0"
+  image_size: 224
+  validation:
+    check_corrupted: true
+    allow_missing: false
+  splits:
+    train_ratio: 0.7
+    val_ratio: 0.15
+    test_ratio: 0.15
+    seed: 42
+  kfold:
+    enabled: false
+    n_splits: 5

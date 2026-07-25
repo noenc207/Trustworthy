@@ -1,0 +1,243 @@
+# ============================================================
+# Trustworthy Skin Cancer AI Platform — Docker Compose
+# Full-stack orchestration: Backend, Frontend, DB, Cache,
+# Monitoring, MLflow, and Nginx
+# ============================================================
+
+version: "3.9"
+
+# ────────────────────────────────────────────────────────────
+# Named Volumes
+# ────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  mlflow_data:
+    driver: local
+  model_registry:
+    driver: local
+  uploads:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# ────────────────────────────────────────────────────────────
+# Networks
+# ────────────────────────────────────────────────────────────
+networks:
+  backend_net:
+    driver: bridge
+  frontend_net:
+    driver: bridge
+  monitoring_net:
+    driver: bridge
+
+# ────────────────────────────────────────────────────────────
+# Services
+# ────────────────────────────────────────────────────────────
+services:
+
+  # ──────────────────────────────────────────────────────────
+  # PostgreSQL — Primary Relational Database
+  # ──────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: skin_ai_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-skinai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: ${POSTGRES_DB:-skin_cancer_ai}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deployment/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - backend_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-skinai}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ──────────────────────────────────────────────────────────
+  # Redis — Caching & Task Queue
+  # ──────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: skin_ai_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redispassword} --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - backend_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redispassword}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────────────────
+  # FastAPI Backend — AI Inference + REST API
+  # ──────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: skin_ai_backend
+    restart: unless-stopped
+    environment:
+      - APP_ENV=production
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-skinai}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-skin_cancer_ai}
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redispassword}@redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      - MODEL_REGISTRY_PATH=/app/models
+      - UPLOAD_DIR=/app/uploads
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    volumes:
+      - model_registry:/app/models:ro
+      - uploads:/app/uploads
+      - ./logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend_net
+      - frontend_net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  # ──────────────────────────────────────────────────────────
+  # React Frontend
+  # ──────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: skin_ai_frontend
+    restart: unless-stopped
+    environment:
+      - VITE_API_BASE_URL=http://backend:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - frontend_net
+
+  # ──────────────────────────────────────────────────────────
+  # Nginx — Reverse Proxy & Load Balancer
+  # ──────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: skin_ai_nginx
+    restart: unless-stopped
+    volumes:
+      - ./deployment/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./deployment/nginx/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - frontend_net
+      - backend_net
+
+  # ──────────────────────────────────────────────────────────
+  # MLflow — Experiment Tracking Server
+  # ──────────────────────────────────────────────────────────
+  mlflow:
+    image: python:3.12-slim
+    container_name: skin_ai_mlflow
+    restart: unless-stopped
+    command: >
+      mlflow server
+        --backend-store-uri postgresql://${POSTGRES_USER:-skinai}:${POSTGRES_PASSWORD}@db:5432/mlflow
+        --default-artifact-root /mlflow/artifacts
+        --host 0.0.0.0
+        --port 5000
+    environment:
+      - MLFLOW_TRACKING_URI=http://localhost:5000
+    volumes:
+      - mlflow_data:/mlflow/artifacts
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend_net
+      - monitoring_net
+
+  # ──────────────────────────────────────────────────────────
+  # Prometheus — Metrics Scraping
+  # ──────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.50.0
+    container_name: skin_ai_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./deployment/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=30d"
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring_net
+      - backend_net
+
+  # ──────────────────────────────────────────────────────────
+  # Grafana — Metrics Visualization Dashboard
+  # ──────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: skin_ai_grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deployment/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./deployment/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring_net

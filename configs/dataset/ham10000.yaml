@@ -1,0 +1,39 @@
+# HAM10000 Dataset Configuration
+_target_: src.modules.dataset_manager.datasets.HAM10000Dataset
+
+name: ham10000
+root_dir: data/datasets/ham10000
+split_dir: data/datasets/ham10000/splits
+
+num_classes: 7
+class_names:
+  - mel
+  - nv
+  - bcc
+  - akiec
+  - bkl
+  - df
+  - vasc
+
+# Class weights for imbalanced training
+class_weights:
+  mel: 2.5
+  nv: 0.5
+  bcc: 2.0
+  akiec: 2.0
+  bkl: 1.0
+  df: 3.0
+  vasc: 3.5
+
+batch_size: 32
+num_workers: 8
+pin_memory: true
+persistent_workers: true
+
+# Train/Val/Test split ratios
+train_ratio: 0.70
+val_ratio: 0.15
+test_ratio: 0.15
+
+# Stratified split to maintain class balance
+stratified_split: true

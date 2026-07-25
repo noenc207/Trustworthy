@@ -1,0 +1,19 @@
+# PyTorch Lightning Trainer Configuration
+max_epochs: 100
+accelerator: gpu
+devices: 1
+precision: 16-mixed
+accumulate_grad_batches: 2
+gradient_clip_val: 1.0
+log_every_n_steps: 10
+val_check_interval: 1.0
+
+# Checkpointing
+checkpoint_dir: research/checkpoints
+
+# Early stopping
+early_stopping_patience: 15
+early_stopping_min_delta: 0.001
+
+# Deterministic training for reproducibility
+deterministic: true

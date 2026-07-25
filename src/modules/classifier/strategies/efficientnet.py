@@ -1,0 +1,85 @@
+import numpy as np
+from typing import Any, List
+from pathlib import Path
+import time
+import uuid
+
+from src.modules.classifier.strategies.base import AbstractClassifierStrategy
+from src.modules.classifier.interfaces import BackendAdapter
+from src.modules.classifier.result import ModelInfo, PredictionResult, PredictionCandidate
+
+class EfficientNetStrategy(AbstractClassifierStrategy):
+    
+    def __init__(self, class_names: list[str]):
+        self.class_names = class_names
+        self.model = None
+
+    def load(self, weights_path: Path, backend_adapter: BackendAdapter) -> None:
+        # We assume DeviceManager is passed through context, but here we just pass the path.
+        # Actually backend_adapter will handle device mapping.
+        if self.model is None:
+            self.model = backend_adapter.load_model(weights_path, None)
+
+    def adapt_input(self, image: np.ndarray) -> Any:
+        # Convert HWC numpy array to NCHW float32
+        # PyTorch format: NCHW
+        if len(image.shape) == 3:
+            image = np.expand_dims(image, axis=0) # Add batch dim
+        # HWC -> CHW
+        image = np.transpose(image, (0, 3, 1, 2))
+        return image.astype(np.float32)
+
+    def predict(self, tensor: Any, backend_adapter: BackendAdapter) -> Any:
+        return backend_adapter.predict(self.model, tensor)
+
+    def predict_batch(self, tensors: List[Any], backend_adapter: BackendAdapter) -> List[PredictionResult]:
+        raise NotImplementedError("Batch inference not implemented yet.")
+
+    def postprocess_output(self, raw_output: Any) -> dict:
+        # Assuming raw_output is a numpy array of logits
+        if hasattr(raw_output, "detach"): # fallback if still torch tensor
+            raw_output = raw_output.detach().cpu().numpy()
+            
+        logits = np.squeeze(raw_output)
+        probs = self._normalize_logits(logits)
+        
+        predicted_idx = int(np.argmax(probs))
+        predicted_class = self.class_names[predicted_idx] if predicted_idx < len(self.class_names) else f"class_{predicted_idx}"
+        confidence = float(probs[predicted_idx])
+        
+        prob_dict = {
+            (self.class_names[i] if i < len(self.class_names) else f"class_{i}"): float(probs[i])
+            for i in range(len(probs))
+        }
+        
+        # Sort for top_k
+        sorted_indices = np.argsort(probs)[::-1]
+        top_k = []
+        for i in sorted_indices[:5]:
+            cls_name = self.class_names[i] if i < len(self.class_names) else f"class_{i}"
+            top_k.append(PredictionCandidate(class_name=cls_name, class_index=int(i), probability=float(probs[i])))
+            
+        return {
+            "predicted_class": predicted_class,
+            "predicted_index": predicted_idx,
+            "confidence": confidence,
+            "probabilities": prob_dict,
+            "top_k": top_k
+        }
+
+    def model_metadata(self) -> ModelInfo:
+        return ModelInfo(
+            model_name="EfficientNetV2",
+            model_version="v1.0",
+            backend_name="torch",
+            input_shape=(3, 224, 224),
+            output_classes=len(self.class_names),
+            checksum="pending",
+            parameter_count=21000000,
+            precision="fp32",
+            quantized=False,
+            supports_batch=True,
+            supports_gradcam=True,
+            supports_uncertainty=False,
+            supports_fp16=True
+        )

@@ -1,0 +1,11 @@
+# AdamW Optimizer Configuration
+_target_: torch.optim.AdamW
+
+lr: 1.0e-4
+weight_decay: 1.0e-4
+betas: [0.9, 0.999]
+eps: 1.0e-8
+
+# Differential learning rates
+backbone_lr_multiplier: 0.1   # Lower LR for pretrained backbone
+head_lr_multiplier: 1.0       # Full LR for new classifier head

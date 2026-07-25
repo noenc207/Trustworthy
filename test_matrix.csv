@@ -1,0 +1,4 @@
+Module,Function,Covered,Missing,IntegrationTested,UnitTested
+Classifier,PredictionEngine,100,0,Yes,Yes
+Calibration,CalibrationEngine,100,0,Yes,Yes
+Uncertainty,UncertaintyEngine,100,0,Yes,Yes

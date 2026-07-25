@@ -1,0 +1,134 @@
+# ============================================================
+# Trustworthy Skin Cancer AI Platform — Conda Environment
+# ============================================================
+# Usage:
+#   conda env create -f environment.yml
+#   conda activate skin-cancer-ai
+
+name: skin-cancer-ai
+
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+
+dependencies:
+  # ──────────────────────────────────────────────────────────
+  # Python Runtime
+  # ──────────────────────────────────────────────────────────
+  - python=3.12
+
+  # ──────────────────────────────────────────────────────────
+  # PyTorch Ecosystem (CUDA 12.1)
+  # ──────────────────────────────────────────────────────────
+  - pytorch>=2.2.0
+  - torchvision>=0.17.0
+  - pytorch-cuda=12.1
+  - cudatoolkit=12.1
+
+  # ──────────────────────────────────────────────────────────
+  # Core Scientific Stack
+  # ──────────────────────────────────────────────────────────
+  - numpy>=1.26.0
+  - pandas>=2.2.0
+  - scikit-learn>=1.4.0
+  - scipy>=1.12.0
+  - matplotlib>=3.8.0
+  - seaborn>=0.13.0
+  - pillow>=10.2.0
+  - opencv>=4.9.0
+
+  # ──────────────────────────────────────────────────────────
+  # Development Tools
+  # ──────────────────────────────────────────────────────────
+  - pip
+
+  - pip:
+    # ────────────────────────────────────────────────────────
+    # Deep Learning Frameworks & Utilities
+    # ────────────────────────────────────────────────────────
+    - lightning>=2.2.0
+    - torchmetrics>=1.3.0
+    - timm>=0.9.16              # EfficientNet, ViT, SwinT pretrained models
+    - albumentations>=1.4.0
+    - onnxruntime-gpu>=1.17.0
+    - grad-cam>=1.4.8           # pytorch-grad-cam
+
+    # ────────────────────────────────────────────────────────
+    # Trustworthy AI Libraries
+    # ────────────────────────────────────────────────────────
+    - torchvision>=0.17.0
+    - netcal>=1.3.5             # Calibration metrics (ECE, MCE, NLL)
+    - uncertainty-toolbox>=0.1.1
+
+    # ────────────────────────────────────────────────────────
+    # Configuration & Experiment Management
+    # ────────────────────────────────────────────────────────
+    - hydra-core>=1.3.2
+    - omegaconf>=2.3.0
+    - mlflow>=2.11.0
+    - wandb>=0.16.0
+
+    # ────────────────────────────────────────────────────────
+    # Backend — FastAPI
+    # ────────────────────────────────────────────────────────
+    - fastapi>=0.110.0
+    - uvicorn[standard]>=0.27.0
+    - pydantic>=2.6.0
+    - pydantic-settings>=2.2.0
+    - python-multipart>=0.0.9  # File uploads
+    - python-jose[cryptography]>=3.3.0  # JWT
+    - passlib[bcrypt]>=1.7.4
+    - httpx>=0.27.0
+
+    # ────────────────────────────────────────────────────────
+    # Database
+    # ────────────────────────────────────────────────────────
+    - sqlalchemy>=2.0.28
+    - alembic>=1.13.1
+    - asyncpg>=0.29.0          # Async PostgreSQL driver
+    - redis>=5.0.1
+    - aioredis>=2.0.1
+
+    # ────────────────────────────────────────────────────────
+    # Utilities
+    # ────────────────────────────────────────────────────────
+    - loguru>=0.7.2
+    - rich>=13.7.0
+    - tqdm>=4.66.0
+    - click>=8.1.7
+    - python-dotenv>=1.0.1
+    - cryptography>=42.0.0
+
+    # ────────────────────────────────────────────────────────
+    # Observability
+    # ────────────────────────────────────────────────────────
+    - tensorboard>=2.16.0
+    - prometheus-fastapi-instrumentator>=6.1.0
+    - opentelemetry-sdk>=1.23.0
+
+    # ────────────────────────────────────────────────────────
+    # Code Quality
+    # ────────────────────────────────────────────────────────
+    - ruff>=0.3.0
+    - black>=24.3.0
+    - isort>=5.13.2
+    - mypy>=1.9.0
+    - pre-commit>=3.6.2
+
+    # ────────────────────────────────────────────────────────
+    # Testing
+    # ────────────────────────────────────────────────────────
+    - pytest>=8.1.0
+    - pytest-asyncio>=0.23.5
+    - pytest-cov>=5.0.0
+    - pytest-mock>=3.12.0
+    - httpx>=0.27.0             # For FastAPI TestClient
+    - factory-boy>=3.3.0
+
+    # ────────────────────────────────────────────────────────
+    # Documentation
+    # ────────────────────────────────────────────────────────
+    - mkdocs-material>=9.5.0
+    - mkdocstrings[python]>=0.24.0

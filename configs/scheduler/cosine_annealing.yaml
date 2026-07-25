@@ -1,0 +1,10 @@
+# Cosine Annealing LR Scheduler with Warm Restarts
+_target_: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
+
+T_0: 10          # Epochs for first restart
+T_mult: 2        # Multiply T after each restart
+eta_min: 1.0e-7  # Minimum LR
+
+# Linear warmup settings
+warmup_epochs: 5
+warmup_start_lr: 1.0e-7

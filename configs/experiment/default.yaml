@@ -1,0 +1,15 @@
+# Experiment configuration
+name: baseline_efficientnet_b4
+project: trustworthy_skin_cancer_ai
+description: "Baseline EfficientNet-B4 on HAM10000"
+
+# Tags for experiment tracking
+tags:
+  - baseline
+  - efficientnet_b4
+  - ham10000
+
+# Ablation study config
+ablation:
+  enabled: false
+  study_name: null

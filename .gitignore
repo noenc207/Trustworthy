@@ -1,0 +1,129 @@
+# ============================================================
+# Trustworthy Skin Cancer AI Platform — .gitignore
+# ============================================================
+
+# ────────────────────────────────────────────────────────────
+# Python
+# ────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.installed.cfg
+*.egg-link
+.python-version
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+!.env.example
+
+# ────────────────────────────────────────────────────────────
+# ML / Research Artifacts
+# ────────────────────────────────────────────────────────────
+# Model weights and checkpoints (large binary files → use DVC or Git LFS)
+data/datasets/
+research/weights/
+research/checkpoints/
+*.pth
+*.pt
+*.ckpt
+*.bin
+*.onnx
+*.engine
+*.trt
+
+# Experiment outputs
+outputs/
+mlruns/
+wandb/
+.neptune/
+lightning_logs/
+
+# ────────────────────────────────────────────────────────────
+# Data
+# ────────────────────────────────────────────────────────────
+data/datasets/*/raw/
+data/datasets/*/processed/
+data/datasets/*/cache/
+data/datasets/*/augmented/
+*.csv.gz
+*.parquet
+*.h5
+*.hdf5
+
+# ────────────────────────────────────────────────────────────
+# Logs
+# ────────────────────────────────────────────────────────────
+logs/
+*.log
+research/logs/
+
+# ────────────────────────────────────────────────────────────
+# IDE / Editor
+# ────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ────────────────────────────────────────────────────────────
+# Testing
+# ────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# ────────────────────────────────────────────────────────────
+# Node / Frontend
+# ────────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/.next/
+frontend/dist/
+frontend/build/
+frontend/.env.local
+frontend/.env.production
+
+# ────────────────────────────────────────────────────────────
+# Docker
+# ────────────────────────────────────────────────────────────
+*.dockerignore
+
+# ────────────────────────────────────────────────────────────
+# Secrets / Security
+# ────────────────────────────────────────────────────────────
+*.pem
+*.key
+*.crt
+secrets/
+.secrets/
+
+# ────────────────────────────────────────────────────────────
+# Hydra outputs
+# ────────────────────────────────────────────────────────────
+outputs/
+multirun/
+.hydra/
+
+# ────────────────────────────────────────────────────────────
+# Jupyter
+# ────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
