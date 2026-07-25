@@ -297,6 +297,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 - [pytorch-lightning](https://lightning.ai/) — Lightning AI team
 - [Hydra](https://hydra.cc/) — Meta AI
 # Trustworthy
-#   T r u s t w o r t h y  
- #   T r u s t w o r t h y  
+ 
+ 
  
