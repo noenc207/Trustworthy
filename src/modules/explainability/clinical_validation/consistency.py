@@ -4,7 +4,8 @@ import numpy as np
 
 class EvidenceConsistencyMatrix:
     def __init__(self):
-        pass
+        self.min_consistency = 0.5
+        self.weight = 1.0
 
     def build_matrix(self, evidence_scores: list[float]) -> np.ndarray:
         n = len(evidence_scores)

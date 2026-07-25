@@ -42,4 +42,9 @@ class CalibrationStage(PipelineStage):
         return context
 
     def cleanup(self) -> None:
-        pass
+        """Release calibration resources."""
+        if hasattr(self, '_calibrator'):
+            del self._calibrator
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()

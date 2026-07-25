@@ -8,7 +8,8 @@ with contextlib.suppress(ImportError):
 
 class MorphologicalEngine:
     def __init__(self):
-        pass
+        self.enabled_features = ["asymmetry", "border", "color"]
+        self.resolution = 224
 
     def compute_morphology(self, image: np.ndarray, mask: np.ndarray) -> dict[str, float]:
         asymmetry_score = 0.5

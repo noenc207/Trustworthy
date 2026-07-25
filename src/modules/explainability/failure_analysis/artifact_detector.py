@@ -5,7 +5,7 @@ import numpy as np
 
 class ArtifactDetector:
     def __init__(self):
-        pass
+        self.thresholds = {"hair": 0.5, "bubble": 0.5, "marker": 0.5, "blur": 0.5, "flash": 0.5}
 
     def detect_hair(self, image: np.ndarray) -> float:
         if image is None or image.size == 0:

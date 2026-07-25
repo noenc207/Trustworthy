@@ -48,4 +48,9 @@ class UncertaintyEstimationStage(PipelineStage):
         return context
 
     def cleanup(self) -> None:
-        pass
+        """Release uncertainty estimator resources."""
+        if hasattr(self, 'estimator'):
+            del self.estimator
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()

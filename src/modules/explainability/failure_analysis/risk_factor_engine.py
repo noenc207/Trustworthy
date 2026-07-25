@@ -3,7 +3,7 @@ from typing import Any
 
 class RiskFactorEngine:
     def __init__(self):
-        pass
+        self.weights = {"hair": 0.2, "bubble": 0.15, "marker": 0.15, "blur": 0.3, "flash": 0.2}
 
     def evaluate_risk(self, artifact_confidences: dict[str, float], patient_metadata: dict[str, Any] | None = None) -> float:
         base_risk = 0.0

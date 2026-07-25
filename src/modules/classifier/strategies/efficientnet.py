@@ -33,7 +33,33 @@ class EfficientNetStrategy(AbstractClassifierStrategy):
         return backend_adapter.predict(self.model, tensor)
 
     def predict_batch(self, tensors: List[Any], backend_adapter: BackendAdapter) -> List[PredictionResult]:
-        raise NotImplementedError("Batch inference not implemented yet.")
+        import torch
+        if isinstance(tensors, list):
+            if isinstance(tensors[0], np.ndarray):
+                batch = np.concatenate(tensors, axis=0)
+            elif torch.is_tensor(tensors[0]):
+                batch = torch.cat(tensors, dim=0)
+            else:
+                batch = tensors
+        else:
+            batch = tensors
+
+        raw_output = backend_adapter.predict(self.model, batch)
+        if hasattr(raw_output, "detach"):
+            raw_output = raw_output.detach().cpu().numpy()
+
+        results = []
+        for i in range(raw_output.shape[0]):
+            res_dict = self.postprocess_output(raw_output[i:i+1])
+            results.append(PredictionResult(
+                predicted_class=res_dict["predicted_class"],
+                predicted_index=res_dict["predicted_index"],
+                confidence=res_dict["confidence"],
+                probabilities=res_dict["probabilities"],
+                top_k=res_dict["top_k"],
+                warnings=[]
+            ))
+        return results
 
     def postprocess_output(self, raw_output: Any) -> dict:
         # Assuming raw_output is a numpy array of logits

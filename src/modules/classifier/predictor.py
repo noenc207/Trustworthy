@@ -27,6 +27,16 @@ class InferencePredictor:
         if not self.config.lazy_loading:
             self._load_model()
             
+    def _get_memory_mb(self) -> float:
+        import torch
+        import psutil
+        import os
+        if torch.cuda.is_available():
+            return torch.cuda.memory_allocated() / (1024 * 1024)
+        else:
+            process = psutil.Process(os.getpid())
+            return process.memory_info().rss / (1024 * 1024)
+
     def _load_model(self):
         weights_path = Path(self.config.weights_path)
         self.strategy.load(weights_path, self.backend_adapter)
@@ -64,7 +74,7 @@ class InferencePredictor:
             backend=self.config.backend,
             device=self.config.device,
             latency=latency,
-            memory_mb=0.0, # Placeholder for actual memory usage probe
+            memory_mb=self._get_memory_mb(),
             pipeline_version="v5.2",
             preprocessing_version="v6.2",
             model_version=self.config.model_version,

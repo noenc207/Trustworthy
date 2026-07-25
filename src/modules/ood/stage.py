@@ -35,4 +35,9 @@ class OODDetectionStage(PipelineStage):
         return context
 
     def cleanup(self) -> None:
-        pass
+        """Release OOD detector resources."""
+        if hasattr(self, 'detector'):
+            del self.detector
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()

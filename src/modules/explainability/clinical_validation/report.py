@@ -4,7 +4,8 @@ from src.modules.explainability.result import ClinicalReport
 
 class ClinicalReportGenerator:
     def __init__(self):
-        pass
+        self.version = "1.0"
+        self.format = "json"
 
     def generate_report(self, alignment_score: float, morphology: dict[str, float], rules: list[str]) -> ClinicalReport:
         is_reliable = alignment_score > 0.7

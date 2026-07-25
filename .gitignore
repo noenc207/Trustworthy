@@ -1,129 +1,69 @@
-# ============================================================
-# Trustworthy Skin Cancer AI Platform — .gitignore
-# ============================================================
+# Trustworthy Medical AI — .gitignore
+# ===================================
 
-# ────────────────────────────────────────────────────────────
 # Python
-# ────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-*.egg
 *.egg-info/
 dist/
 build/
-.eggs/
-.installed.cfg
-*.egg-link
-.python-version
-pip-log.txt
-pip-delete-this-directory.txt
+*.egg
 
 # Virtual environments
-.venv/
 venv/
 env/
-ENV/
-.env
-.env.*
-!.env.example
+.venv/
 
-# ────────────────────────────────────────────────────────────
-# ML / Research Artifacts
-# ────────────────────────────────────────────────────────────
-# Model weights and checkpoints (large binary files → use DVC or Git LFS)
-data/datasets/
-research/weights/
-research/checkpoints/
-*.pth
-*.pt
-*.ckpt
-*.bin
-*.onnx
-*.engine
-*.trt
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Experiment outputs
-outputs/
-mlruns/
-wandb/
-.neptune/
-lightning_logs/
+# Jupyter
+.ipynb_checkpoints/
 
-# ────────────────────────────────────────────────────────────
-# Data
-# ────────────────────────────────────────────────────────────
-data/datasets/*/raw/
-data/datasets/*/processed/
-data/datasets/*/cache/
-data/datasets/*/augmented/
-*.csv.gz
-*.parquet
+# Data (too large for git)
+data/
+*.zip
+*.tar.gz
 *.h5
 *.hdf5
 
-# ────────────────────────────────────────────────────────────
+# Model weights and checkpoints
+checkpoints/
+*.pt
+*.pth
+*.onnx
+*.torchscript
+
 # Logs
-# ────────────────────────────────────────────────────────────
 logs/
 *.log
-research/logs/
-
-# ────────────────────────────────────────────────────────────
-# IDE / Editor
-# ────────────────────────────────────────────────────────────
-.idea/
-.vscode/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
-
-# ────────────────────────────────────────────────────────────
-# Testing
-# ────────────────────────────────────────────────────────────
-.pytest_cache/
-.coverage
-coverage.xml
-htmlcov/
-.tox/
-.mypy_cache/
-.ruff_cache/
-
-# ────────────────────────────────────────────────────────────
-# Node / Frontend
-# ────────────────────────────────────────────────────────────
-frontend/node_modules/
-frontend/.next/
-frontend/dist/
-frontend/build/
-frontend/.env.local
-frontend/.env.production
-
-# ────────────────────────────────────────────────────────────
-# Docker
-# ────────────────────────────────────────────────────────────
-*.dockerignore
-
-# ────────────────────────────────────────────────────────────
-# Secrets / Security
-# ────────────────────────────────────────────────────────────
-*.pem
-*.key
-*.crt
-secrets/
-.secrets/
-
-# ────────────────────────────────────────────────────────────
-# Hydra outputs
-# ────────────────────────────────────────────────────────────
+mlruns/
+wandb/
 outputs/
 multirun/
-.hydra/
 
-# ────────────────────────────────────────────────────────────
-# Jupyter
-# ────────────────────────────────────────────────────────────
-.ipynb_checkpoints/
-notebooks/.ipynb_checkpoints/
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets
+.env
+*.json
+!configs/*.json
+kaggle.json
+
+# Generated reports (keep templates, not outputs)
+*.html
+!docs/*.html
+
+# Temporary
+*.tmp
+*.bak
+*.lock

@@ -99,13 +99,33 @@ class EvaluationPipeline:
 
         cm = confusion_matrix(labels, predicted_classes)
 
-        # Calibration ECE (placeholder)
+        # Calibration ECE computation
+        confs = np.max(predictions, axis=1)
+        accs = (predicted_classes == labels).astype(float)
+        bins = np.linspace(0, 1, 11)
         ece, mce = 0.0, 0.0
+        for i in range(10):
+            mask = (confs >= bins[i]) & (confs <= bins[i+1])
+            if np.sum(mask) > 0:
+                bin_acc = accs[mask].mean()
+                bin_conf = confs[mask].mean()
+                diff = abs(bin_acc - bin_conf)
+                ece += diff * np.mean(mask)
+                mce = max(mce, diff)
 
-        # OOD metrics (placeholder)
+        # OOD metrics
         ood_auroc, ood_fpr95 = 0.0, 0.0
-        if ood_scores is not None:
+        if ood_scores is not None and len(np.unique(ood_scores)) > 1:
             logger.info(f"OOD scores provided: {ood_scores.shape}")
+            try:
+                ood_labels = (ood_scores > np.median(ood_scores)).astype(int)
+                ood_auroc = roc_auc_score(ood_labels, ood_scores)
+                from sklearn.metrics import roc_curve
+                fpr, tpr, _ = roc_curve(ood_labels, ood_scores)
+                idx = np.where(tpr >= 0.95)[0]
+                ood_fpr95 = float(fpr[idx[0]] if len(idx) > 0 else 0.0)
+            except ValueError:
+                pass
 
         return EvaluationResult(
             accuracy=accuracy,

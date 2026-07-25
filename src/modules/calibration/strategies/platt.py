@@ -11,7 +11,12 @@ class PlattScalingStrategy(AbstractCalibrationStrategy):
         self.b = b
         
     def fit(self, logits: Any, labels: Any) -> None:
-        pass
+        from sklearn.linear_model import LogisticRegression
+        import numpy as np
+        lr = LogisticRegression(solver='lbfgs')
+        lr.fit(np.array(logits).reshape(-1, 1), np.array(labels))
+        self.a = float(lr.coef_[0][0])
+        self.b = float(lr.intercept_[0])
         
     def calibrate(self, classification_result: PredictionResult, raw_logits: Any = None) -> dict[str, Any]:
         conf = classification_result.confidence

@@ -6,7 +6,10 @@ class IsotonicRegressionStrategy(AbstractCalibrationStrategy):
     """Isotonic Regression Calibration."""
     
     def fit(self, logits: Any, labels: Any) -> None:
-        pass
+        from sklearn.isotonic import IsotonicRegression
+        import numpy as np
+        self.ir = IsotonicRegression(out_of_bounds='clip')
+        self.ir.fit(np.array(logits), np.array(labels))
         
     def calibrate(self, classification_result: PredictionResult, raw_logits: Any = None) -> dict[str, Any]:
         # Stub implementation. Usually requires a fitted piecewise constant function.

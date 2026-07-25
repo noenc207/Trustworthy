@@ -62,6 +62,15 @@ class StabilityEvaluator:
 
         ssim = 1.0 - mad # simplified SSIM for stub, ideally skimage.metrics.structural_similarity
 
+        # Intersection over Union and Dice (simple threshold based)
+        thresh_orig = original_heatmap > 0.5
+        thresh_noisy = noisy_heatmap > 0.5
+        intersection = np.logical_and(thresh_orig, thresh_noisy).sum()
+        union = np.logical_or(thresh_orig, thresh_noisy).sum()
+        iou = float(intersection / (union + 1e-8))
+        dice = float(2.0 * intersection / (thresh_orig.sum() + thresh_noisy.sum() + 1e-8))
+
+
         stability_score = max(0.0, min(100.0, corr * 100.0))
 
         stat_result = StatisticalResult(
@@ -74,8 +83,8 @@ class StabilityEvaluator:
 
         return StabilityResult(
             ssim=ssim,
-            iou=corr, # placeholder
-            dice=corr, # placeholder
+            iou=iou, # calculated IoU
+            dice=dice, # calculated Dice
             correlation=corr,
             mad=mad,
             mse=mse,

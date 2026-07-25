@@ -4,7 +4,8 @@ from src.modules.explainability.result import RuleResult
 
 class ClinicalRuleEngine:
     def __init__(self):
-        pass
+        self.abcde_weights = {"asymmetry": 1.0, "border": 1.0}
+        self.min_match = 0.6
 
     def evaluate_abcde(self, morphology_features: dict[str, float]) -> list[RuleResult]:
         rules = []

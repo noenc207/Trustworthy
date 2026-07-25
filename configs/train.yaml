@@ -1,19 +1,80 @@
-# Default training configuration
-# Hydra base config
-defaults:
-  - dataset: ham10000
-  - model: efficientnet_b4
-  - optimizer: adamw
-  - scheduler: cosine_annealing
-  - trainer: default
-  - logging: tensorboard
-  - experiment: default
-  - augmentation: standard
-  - _self_
+# ==============================================================================
+# Trustworthy Medical AI — Main Training Configuration
+# ==============================================================================
+# This is the Hydra root configuration for end-to-end training.
+# Override any value from CLI: python -m src.training.train_pipeline trainer.max_epochs=50
+# ==============================================================================
 
 seed: 42
+
+# --- Model ---
+model:
+  _target_: src.modules.classification.classifier.SkinLesionClassifier
+  backbone: "efficientnet_b4"
+  num_classes: 7
+  pretrained: true
+  drop_rate: 0.3
+
+# --- Dataset ---
+dataset:
+  name: "ham10000"                 # ham10000 | isic2019 | synthetic
+  base_path: "data/ham10000"
+  image_size: 224
+  batch_size: 32
+  num_workers: 4
+  pin_memory: true
+  use_weighted_sampler: true       # Compensate class imbalance
+  augmentation: "standard"         # standard | heavy | minimal
+
+# --- Trainer ---
+trainer:
+  max_epochs: 50
+  learning_rate: 1.0e-3
+  weight_decay: 1.0e-4
+  label_smoothing: 0.1
+  gradient_clip_val: 1.0
+  accumulate_grad_batches: 1
+  precision: "16-mixed"            # 32-true | 16-mixed | bf16-mixed
+  accelerator: "auto"              # auto | gpu | cpu
+  devices: 1
+  deterministic: true
+  early_stopping_patience: 10
+  checkpoint_dir: "checkpoints/"
+  strict_mode: false               # Raise on NaN if true
+
+# --- Optimizer ---
+optimizer:
+  name: "adamw"                    # sgd | adam | adamw | sam | lookahead_adam
+  lr: 1.0e-3
+  weight_decay: 1.0e-4
+
+# --- Scheduler ---
+scheduler:
+  name: "cosine"                   # cosine | cosine_warm_restarts | onecycle | step | plateau
+  T_max: 50                        # For cosine
+  warmup_epochs: 5
+  min_lr: 1.0e-6
+
+# --- Loss ---
+loss:
+  name: "focal"                    # cross_entropy | focal | label_smoothing | weighted_ce | composite
+  gamma: 2.0                       # For focal loss
+  alpha: null                       # Per-class weights (auto-computed if null)
+
+# --- EMA ---
+ema:
+  enabled: true
+  decay: 0.999
+
+# --- Experiment ---
+experiment:
+  name: "trustworthy_baseline"
+  project: "trustworthy-ai"
+
+# --- Logging ---
 use_wandb: false
 
+# --- MLflow ---
 mlflow:
-  tracking_uri: http://localhost:5000
-  experiment_name: skin_cancer_ai_training
+  tracking_uri: null
+  experiment_name: "trustworthy-skin-ai"

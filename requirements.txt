@@ -1,103 +1,53 @@
-# ============================================================
-# Trustworthy Skin Cancer AI Platform — requirements.txt
-# Pin versions for reproducibility.
-# For development extras, see requirements-dev.txt
-# ============================================================
+# ==============================================================================
+# Trustworthy Medical AI — Requirements
+# ==============================================================================
+# Core ML/DL dependencies for training and inference.
+# Install: pip install -r requirements.txt
+# ==============================================================================
 
-# ────────────────────────────────────────────────────────────
-# PyTorch Ecosystem
-# Install via: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-# ────────────────────────────────────────────────────────────
-torch>=2.2.0
-torchvision>=0.17.0
-torchaudio>=2.2.0
+# --- Core Deep Learning ---
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+pytorch-lightning>=2.0.0
+torchmetrics>=1.0.0
+timm>=0.9.0
 
-# ────────────────────────────────────────────────────────────
-# Lightning & Metrics
-# ────────────────────────────────────────────────────────────
-lightning>=2.2.0
-torchmetrics>=1.3.0
+# --- Data Processing ---
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+scipy>=1.10.0
+Pillow>=10.0.0
+opencv-python>=4.8.0
+albumentations>=1.3.0
 
-# ────────────────────────────────────────────────────────────
-# Pretrained Model Hub
-# ────────────────────────────────────────────────────────────
-timm>=0.9.16
-
-# ────────────────────────────────────────────────────────────
-# Computer Vision
-# ────────────────────────────────────────────────────────────
-opencv-python>=4.9.0.80
-albumentations>=1.4.0
-Pillow>=10.2.0
-
-# ────────────────────────────────────────────────────────────
-# Explainability
-# ────────────────────────────────────────────────────────────
-grad-cam>=1.4.8
-
-# ────────────────────────────────────────────────────────────
-# Trustworthy AI
-# ────────────────────────────────────────────────────────────
-netcal>=1.3.5
-uncertainty-toolbox>=0.1.1
-
-# ────────────────────────────────────────────────────────────
-# Inference
-# ────────────────────────────────────────────────────────────
-onnxruntime-gpu>=1.17.0
-
-# ────────────────────────────────────────────────────────────
-# Scientific Computing
-# ────────────────────────────────────────────────────────────
-numpy>=1.26.0
-pandas>=2.2.0
-scikit-learn>=1.4.0
-scipy>=1.12.0
-matplotlib>=3.8.0
-seaborn>=0.13.0
-
-# ────────────────────────────────────────────────────────────
-# Configuration & Experiment Tracking
-# ────────────────────────────────────────────────────────────
-hydra-core>=1.3.2
+# --- Configuration ---
+hydra-core>=1.3.0
 omegaconf>=2.3.0
-mlflow>=2.11.0
-wandb>=0.16.0
-tensorboard>=2.16.0
 
-# ────────────────────────────────────────────────────────────
-# Backend (FastAPI)
-# ────────────────────────────────────────────────────────────
-fastapi>=0.110.0
-uvicorn[standard]>=0.27.0
-pydantic>=2.6.0
-pydantic-settings>=2.2.0
-python-multipart>=0.0.9
-python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
-httpx>=0.27.0
+# --- Explainability ---
+captum>=0.6.0
+pytorch-grad-cam>=1.4.0
 
-# ────────────────────────────────────────────────────────────
-# Database
-# ────────────────────────────────────────────────────────────
-sqlalchemy>=2.0.28
-alembic>=1.13.1
-asyncpg>=0.29.0
-redis>=5.0.1
-aioredis>=2.0.1
+# --- API ---
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
 
-# ────────────────────────────────────────────────────────────
-# Utilities
-# ────────────────────────────────────────────────────────────
-loguru>=0.7.2
-rich>=13.7.0
-tqdm>=4.66.0
-click>=8.1.7
-python-dotenv>=1.0.1
-cryptography>=42.0.0
+# --- Logging & Monitoring ---
+loguru>=0.7.0
+tensorboard>=2.14.0
+prometheus-fastapi-instrumentator>=6.0.0
+rich>=13.0.0
 
-# ────────────────────────────────────────────────────────────
-# Observability
-# ────────────────────────────────────────────────────────────
-prometheus-fastapi-instrumentator>=6.1.0
-opentelemetry-sdk>=1.23.0
+# --- Experiment Tracking ---
+mlflow>=2.5.0
+
+# --- Export ---
+onnx>=1.14.0
+onnxruntime>=1.15.0
+
+# --- Utilities ---
+psutil>=5.9.0
+tqdm>=4.65.0

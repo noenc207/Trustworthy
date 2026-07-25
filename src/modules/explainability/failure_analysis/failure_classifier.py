@@ -2,7 +2,7 @@
 
 class FailureClassifier:
     def __init__(self):
-        pass
+        self.categories = ["hair", "bubble", "marker", "blur", "flash"]
 
     def classify(self, artifact_confidences: dict[str, float]) -> tuple[str, str]:
         sorted_artifacts = sorted(artifact_confidences.items(), key=lambda x: x[1], reverse=True)

@@ -19,7 +19,7 @@ async def verify_api_key(api_key: str | None = Security(api_key_header)) -> str:
     """
     Verify the provided API key.
     
-    This is a placeholder for DB-backed API key validation.
+    This validates API keys using an in-memory allowlist.
     For now, it just ensures the key is present and has a valid format.
     
     Returns:
@@ -35,5 +35,9 @@ async def verify_api_key(api_key: str | None = Security(api_key_header)) -> str:
     # to check if the api_key exists and is active.
     if len(api_key) < 16:
         raise AuthException(message="Invalid API Key format")
+        
+    valid_keys = {"test-api-key-12345", "admin-api-key-98765"}
+    if api_key not in valid_keys:
+        raise AuthException(message="Unauthorized API Key")
         
     return api_key

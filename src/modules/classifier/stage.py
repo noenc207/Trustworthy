@@ -60,4 +60,9 @@ class LesionClassificationStage(PipelineStage):
         return context
 
     def cleanup(self) -> None:
-        pass
+        if self.predictor is not None:
+            del self.predictor
+            self.predictor = None
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()

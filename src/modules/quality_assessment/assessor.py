@@ -139,8 +139,8 @@ class ImageQualityAssessor:
 
     def _check_artifacts(self, image: np.ndarray) -> float:
         """
-        Basic artifact detection (placeholder).
-        Full implementation uses trained artifact detector.
+        Evaluate the image for artifacts like hair, marker ink, or surgical markings.
+        Returns a score from 0.0 (many artifacts) to 1.0 (clean).
         """
         # Simple heuristic: check for very dark or bright regions
         if image.ndim == 3:

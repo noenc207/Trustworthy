@@ -12,7 +12,8 @@ class ExplainabilityStage:
         self.engine = ExplainabilityEngine(config, backend_adapter)
 
     def initialize(self) -> None:
-        pass
+        import logging
+        logging.getLogger(__name__).info("Initializing ExplainabilityStage")
 
     def validate(self, context) -> bool:
         if "classification" not in context.artifacts:

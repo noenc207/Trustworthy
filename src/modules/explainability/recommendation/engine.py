@@ -2,7 +2,7 @@
 
 class RecommendationEngine:
     def __init__(self):
-        pass
+        self.default_recommendation = "Routine follow-up."
 
     def generate_recommendations(self, diagnosis: str, confidence: float) -> list[str]:
         recs = []

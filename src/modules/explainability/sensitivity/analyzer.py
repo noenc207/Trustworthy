@@ -5,7 +5,8 @@ import numpy as np
 
 class SensitivityAnalyzer:
     def __init__(self):
-        pass
+        self.num_perturbations = 10
+        self.noise_level = 0.01
 
     def compute_robustness(self, image: np.ndarray, model_predict: Callable, perturbations: int = 10) -> float:
         try:
