@@ -66,15 +66,44 @@ echo "--------------------------------------------------------"
 python3 retrain_anti_shortcut.py
 
 # =============================================
-# BƯỚC 4: Upload checkpoint lên mây
+# BƯỚC 4: Tải dữ liệu Lâm sàng (PAD-UFES-20)
 # =============================================
 echo ""
-echo "☁️  BƯỚC 4: Đang upload checkpoint tốt nhất lên mây để tải về..."
+echo "📂 BƯỚC 4: Chuẩn bị dữ liệu PAD-UFES-20 (Ảnh lâm sàng)..."
 
-BEST_CKPT=$(ls -t checkpoints_v2/*.ckpt 2>/dev/null | head -1)
+if [ -d "PAD_UFES_20/raw" ] && [ "$(ls -A PAD_UFES_20/raw 2>/dev/null)" ]; then
+    echo "✅ Dữ liệu PAD-UFES-20 đã có sẵn!"
+else
+    echo "   Đang tải dữ liệu từ Mendeley Data (AWS)..."
+    mkdir -p PAD_UFES_20/raw
+    wget -q --show-progress -O PAD_UFES_20/raw/pad_ufes_20.zip \
+        "https://md-datasets-cache-zipfiles-prod.s3.eu-west-1.amazonaws.com/zr7vgbcyr2-1.zip"
+    
+    echo "   Đang giải nén..."
+    unzip -q -j PAD_UFES_20/raw/pad_ufes_20.zip -d PAD_UFES_20/raw/
+    echo "✅ Tải và giải nén xong!"
+fi
+
+# =============================================
+# BƯỚC 5: Giai đoạn 2 - Fine-Tuning
+# =============================================
+echo ""
+echo "🚀 BƯỚC 5: Bắt đầu GIAI ĐOẠN 2 (Fine-Tuning trên ảnh lâm sàng)..."
+echo "   Sử dụng Checkpoint tốt nhất từ GĐ 1 để dạy bổ túc 15 Epochs."
+echo "--------------------------------------------------------"
+
+python3 finetune_clinical.py
+
+# =============================================
+# BƯỚC 6: Upload checkpoint cực phẩm lên mây
+# =============================================
+echo ""
+echo "☁️  BƯỚC 6: Đang upload checkpoint TỐT NHẤT (Đã Fine-tune) lên mây..."
+
+BEST_CKPT=$(ls -t checkpoints_finetuned/*.ckpt 2>/dev/null | head -1)
 
 if [ -z "$BEST_CKPT" ]; then
-    BEST_CKPT=$(ls -t checkpoints/*.ckpt 2>/dev/null | head -1)
+    BEST_CKPT=$(ls -t checkpoints_v2/*.ckpt 2>/dev/null | head -1)
 fi
 
 if [ -n "$BEST_CKPT" ]; then
@@ -85,14 +114,14 @@ if [ -n "$BEST_CKPT" ]; then
         "https://litterbox.catbox.moe/resources/internals/api.php")
     echo ""
     echo "========================================================"
-    echo "  ✅ TRAINING HOÀN TẤT!"
+    echo "  ✅ CHÚC MỪNG! TRAINING CẢ 2 GIAI ĐOẠN ĐÃ HOÀN TẤT!"
     echo ""
-    echo "  📥 LINK TẢI CHECKPOINT VỀ MÁY TÍNH:"
+    echo "  📥 LINK TẢI BỘ NÃO 'TRÙM CUỐI' VỀ MÁY TÍNH:"
     echo "  $UPLOAD_URL"
     echo ""
     echo "  👆 Copy link trên, dán vào Chrome để tải về!"
-    echo "  Sau đó bỏ vào D:\Trustworthy\checkpoints_v2\"
+    echo "  Sau đó bỏ vào D:\Trustworthy\checkpoints_finetuned\"
     echo "========================================================"
 else
-    echo "⚠️  Không tìm thấy checkpoint. Vui lòng kiểm tra thư mục checkpoints_v2/"
+    echo "⚠️  Không tìm thấy checkpoint!"
 fi

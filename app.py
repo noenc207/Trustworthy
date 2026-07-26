@@ -32,9 +32,9 @@ print("🔄 Đang tải Model AI...")
 model = SkinLesionClassifier(backbone='efficientnet_b4', num_classes=7, pretrained=False)
 
 import glob, os
-ckpt_files = glob.glob('checkpoints_v2/*.ckpt') + glob.glob('checkpoints/*.ckpt')
+ckpt_files = glob.glob('checkpoints_finetuned/*.ckpt') + glob.glob('checkpoints_v2/*.ckpt') + glob.glob('checkpoints/*.ckpt')
 if not ckpt_files:
-    raise FileNotFoundError("Không tìm thấy file checkpoint nào trong thư mục checkpoints/ hoặc checkpoints_v2/")
+    raise FileNotFoundError("Không tìm thấy file checkpoint nào!")
 # Lấy file checkpoint mới nhất
 ckpt_path = max(ckpt_files, key=os.path.getmtime)
 print(f"📦 Sử dụng checkpoint: {ckpt_path}")

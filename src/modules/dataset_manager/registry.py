@@ -4,24 +4,23 @@ Dynamically resolves dataset names to their respective Manager classes.
 """
 from __future__ import annotations
 
-from typing import Type
-
 from src.modules.dataset_manager.base import BaseDatasetManager
 from src.modules.dataset_manager.config import DatasetConfig
 from src.modules.dataset_manager.ham10000 import HAM10000Manager
 from src.modules.dataset_manager.isic2019 import ISIC2019Manager
+from src.modules.dataset_manager.pad_ufes import PADUFES20Manager
 
 
 class DatasetRegistry:
     """Registry mapping dataset names to Manager classes."""
-    _registry: dict[str, Type[BaseDatasetManager]] = {}
+    _registry: dict[str, type[BaseDatasetManager]] = {}
 
     @classmethod
-    def register(cls, name: str, manager_cls: Type[BaseDatasetManager]) -> None:
+    def register(cls, name: str, manager_cls: type[BaseDatasetManager]) -> None:
         cls._registry[name] = manager_cls
 
     @classmethod
-    def get(cls, name: str) -> Type[BaseDatasetManager]:
+    def get(cls, name: str) -> type[BaseDatasetManager]:
         if name not in cls._registry:
             raise ValueError(f"Dataset '{name}' is not registered. Available: {list(cls._registry.keys())}")
         return cls._registry[name]
@@ -38,3 +37,4 @@ class DatasetFactory:
 # Register built-in dataset managers
 DatasetRegistry.register("ham10000", HAM10000Manager)
 DatasetRegistry.register("isic2019", ISIC2019Manager)
+DatasetRegistry.register("pad_ufes20", PADUFES20Manager)
