@@ -35,6 +35,7 @@ data/
 
 # Model weights and checkpoints
 checkpoints/
+checkpoints_v2/
 *.pt
 *.pth
 *.onnx

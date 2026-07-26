@@ -1,8 +1,14 @@
 """
-Data Augmentation Pipeline.
+Data Augmentation Pipeline - Anti-Shortcut-Learning Edition.
+
 Uses albumentations for high-performance image augmentations.
-Provides both standard and Test-Time Augmentations (TTA), 
+Provides both standard and Test-Time Augmentations (TTA),
 as well as batch-level augmentations (MixUp, CutMix).
+
+KEY FIX: Aggressive preprocessing to prevent "Clever Hans" effect:
+  - CenterCrop to remove hospital logos, watermarks at image edges
+  - Heavy CoarseDropout to mask text/arrow artifacts
+  - Strong color jitter to prevent color-based shortcuts
 """
 from __future__ import annotations
 
@@ -15,28 +21,65 @@ from src.core.constants import IMAGE_MEAN, IMAGE_STD
 
 
 def get_train_transforms(image_size: int = 224) -> A.Compose:
-    """Heavy augmentation pipeline for training."""
+    """Anti-shortcut augmentation pipeline for training.
+    
+    Strategy:
+    1. RandomResizedCrop with tight scale (0.5-0.8) forces zoom into lesion center,
+       cutting off logos/watermarks that typically appear at image borders.
+    2. CoarseDropout simulates occlusion and masks any remaining text artifacts.
+    3. Strong color augmentations prevent color-based shortcut learning.
+    """
     return A.Compose([
-        A.RandomResizedCrop(height=image_size, width=image_size, scale=(0.8, 1.0)),
+        # === PHASE 1: ANTI-WATERMARK - Zoom vào trung tâm, cắt bỏ viền ===
+        A.RandomResizedCrop(
+            height=image_size, width=image_size,
+            scale=(0.5, 0.85),  # Zoom mạnh hơn bản cũ (0.8-1.0) để cắt logo
+            ratio=(0.9, 1.1),
+        ),
+
+        # === PHASE 2: Geometric - Lật, xoay ngẫu nhiên ===
         A.HorizontalFlip(p=0.5),
         A.VerticalFlip(p=0.5),
-        A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.1, rotate_limit=45, p=0.5),
-        A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1, p=0.5),
-        A.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.2),
-        A.CoarseDropout(max_holes=8, max_height=int(image_size * 0.1), max_width=int(image_size * 0.1), fill_value=0, p=0.2),
-        A.GaussNoise(var_limit=(10.0, 50.0), p=0.2),
+        A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.15, rotate_limit=90, p=0.5),
+        A.RandomRotate90(p=0.3),
+
+        # === PHASE 3: ANTI-TEXT - Che mọi chữ/mũi tên còn sót lại ===
+        A.CoarseDropout(
+            max_holes=8,
+            max_height=int(image_size * 0.12),
+            max_width=int(image_size * 0.12),
+            min_holes=3,
+            min_height=int(image_size * 0.04),
+            min_width=int(image_size * 0.04),
+            fill_value=0,
+            p=0.7,  # Xác suất cao để AI không thể dựa vào chữ
+        ),
+
+        # === PHASE 4: Color - Phá vỡ shortcut dựa trên màu sắc ===
+        A.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.15, p=0.6),
+        A.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8), p=0.3),
+        A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.5),
+        A.HueSaturationValue(hue_shift_limit=25, sat_shift_limit=35, val_shift_limit=25, p=0.4),
+
+        # === PHASE 5: Noise - Mô phỏng ảnh chụp điện thoại chất lượng thấp ===
+        A.GaussNoise(var_limit=(10.0, 50.0), p=0.3),
         A.GaussianBlur(blur_limit=(3, 7), p=0.2),
-        A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2, p=0.5),
-        A.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=0.3),
+        A.ImageCompression(quality_lower=70, quality_upper=100, p=0.2),
+
+        # === PHASE 6: Normalize và chuyển sang Tensor ===
         A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),
         ToTensorV2(),
     ])
 
 
 def get_val_transforms(image_size: int = 224) -> A.Compose:
-    """Deterministic pipeline for validation."""
+    """Deterministic pipeline for validation.
+    
+    Also applies center crop to remove border artifacts consistently.
+    """
     return A.Compose([
-        A.Resize(height=int(image_size * 1.14), width=int(image_size * 1.14)),
+        # Resize lớn hơn rồi CenterCrop để cắt viền logo
+        A.Resize(height=int(image_size * 1.3), width=int(image_size * 1.3)),
         A.CenterCrop(height=image_size, width=image_size),
         A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),
         ToTensorV2(),
@@ -44,43 +87,32 @@ def get_val_transforms(image_size: int = 224) -> A.Compose:
 
 
 def get_inference_transforms(image_size: int = 224) -> A.Compose:
-    """Deterministic pipeline for inference."""
+    """Deterministic pipeline for inference (same as val)."""
     return get_val_transforms(image_size=image_size)
 
 
 def get_tta_transforms(image_size: int = 224) -> list[A.Compose]:
     """Return a list of augmentation variants for Test-Time Augmentation."""
+    base_pre = [
+        A.Resize(height=int(image_size * 1.3), width=int(image_size * 1.3)),
+        A.CenterCrop(height=image_size, width=image_size),
+    ]
+    base_post = [
+        A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),
+        ToTensorV2(),
+    ]
+
     return [
-        get_val_transforms(image_size=image_size),
-        A.Compose([
-            A.Resize(height=int(image_size * 1.14), width=int(image_size * 1.14)),
-            A.CenterCrop(height=image_size, width=image_size),
-            A.HorizontalFlip(p=1.0),
-            A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),
-            ToTensorV2(),
-        ]),
-        A.Compose([
-            A.Resize(height=int(image_size * 1.14), width=int(image_size * 1.14)),
-            A.CenterCrop(height=image_size, width=image_size),
-            A.VerticalFlip(p=1.0),
-            A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),
-            ToTensorV2(),
-        ]),
-        A.Compose([
-            A.Resize(height=int(image_size * 1.14), width=int(image_size * 1.14)),
-            A.CenterCrop(height=image_size, width=image_size),
-            A.HorizontalFlip(p=1.0),
-            A.VerticalFlip(p=1.0),
-            A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),
-            ToTensorV2(),
-        ]),
-        A.Compose([
-            A.Resize(height=int(image_size * 1.14), width=int(image_size * 1.14)),
-            A.CenterCrop(height=image_size, width=image_size),
-            A.RandomRotate90(p=1.0),
-            A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),
-            ToTensorV2(),
-        ]),
+        # Original (no augmentation)
+        A.Compose(base_pre + base_post),
+        # Horizontal flip
+        A.Compose(base_pre + [A.HorizontalFlip(p=1.0)] + base_post),
+        # Vertical flip
+        A.Compose(base_pre + [A.VerticalFlip(p=1.0)] + base_post),
+        # Both flips
+        A.Compose(base_pre + [A.HorizontalFlip(p=1.0), A.VerticalFlip(p=1.0)] + base_post),
+        # 90-degree rotation
+        A.Compose(base_pre + [A.RandomRotate90(p=1.0)] + base_post),
     ]
 
 
@@ -138,8 +170,8 @@ class CutMixTransform:
         bbx1, bby1, bbx2, bby2 = self._rand_bbox(x.size(), lam)
 
         x[:, :, bbx1:bbx2, bby1:bby2] = x[index, :, bbx1:bbx2, bby1:bby2]
-        
+
         # Adjust lambda to exactly match pixel ratio
         lam = 1 - ((bbx2 - bbx1) * (bby2 - bby1) / (x.size()[-1] * x.size()[-2]))
-        
+
         return x, y_a, y_b, lam
