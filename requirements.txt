@@ -28,7 +28,7 @@ omegaconf>=2.3.0
 
 # --- Explainability ---
 captum>=0.6.0
-pytorch-grad-cam>=1.4.0
+grad-cam>=1.4.0
 
 # --- API ---
 fastapi>=0.100.0

@@ -15,11 +15,15 @@ echo "========================================================"
 # =============================================
 echo ""
 echo "📦 BƯỚC 1: Cài đặt các thư viện cần thiết..."
-pip install -q torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-pip install -q pytorch-lightning hydra-core omegaconf timm \
+sudo apt-get update -yqq
+sudo apt-get install -yqq python3-pip unzip
+
+# Dùng pip3 thay vì pip để chắc chắn ăn vào Python 3
+pip3 install -q torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip3 install -q pytorch-lightning hydra-core omegaconf timm \
     albumentations opencv-python-headless \
     torchmetrics loguru pandas scikit-learn \
-    pytorch-grad-cam mlflow
+    matplotlib seaborn "grad-cam" pydantic-settings mlflow
 
 echo "✅ Cài đặt xong!"
 

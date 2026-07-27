@@ -1,20 +1,22 @@
 import os
-import sys
+import time
+
 import numpy as np
 import torch
 import torch.nn as nn
+
+from src.infrastructure.ml_backends.torch.adapter import TorchBackendAdapter
+from src.modules.classifier.result import PredictionResult
 from src.modules.explainability.config import ExplainabilityConfig
 from src.modules.explainability.enums import XAIAlgorithm
 from src.modules.explainability.orchestrator import ExplainabilityEngine
-from src.infrastructure.ml_backends.torch.adapter import TorchBackendAdapter
-from src.modules.classifier.result import PredictionResult
-import time
+from src.modules.explainability.validation.consistency import ConsistencyValidator
+from src.modules.explainability.validation.correlation import MetricCorrelationAnalyzer
 
 # Metrics and Validation imports
 from src.modules.explainability.validation.reproducibility import ExecutionEnvironment
-from src.modules.explainability.validation.correlation import MetricCorrelationAnalyzer
 from src.modules.explainability.validation.sensitivity import MetricSensitivityEngine
-from src.modules.explainability.validation.consistency import ConsistencyValidator
+
 
 class TinyMedCNN(nn.Module):
     def __init__(self):
@@ -29,7 +31,7 @@ class TinyMedCNN(nn.Module):
         )
         self.pool = nn.AdaptiveAvgPool2d(1)
         self.classifier = nn.Linear(32, 2)
-        
+
     def forward(self, x):
         x = self.layer1(x)
         x = self.layer4(x)
@@ -40,11 +42,11 @@ def run_verification():
     print("\n=======================================================")
     print("M6.7∞++ STATISTICAL CONSISTENCY & VALIDATION PLATFORM")
     print("=======================================================\n")
-    
+
     # [PHASE 8] Reproducibility
     env = ExecutionEnvironment(seed=42)
     env_info = env.capture_environment()
-    print(f"[TEST 1] Reproducibility Environment Captured:")
+    print("[TEST 1] Reproducibility Environment Captured:")
     print(f"  Seed: {env_info['seed']}, Device: {env_info['device']}")
     print("  -> PASSED\n")
 
@@ -58,23 +60,23 @@ def run_verification():
         enable_sanity_checks=True
     )
     engine = ExplainabilityEngine(config, adapter)
-    
+
     model = TinyMedCNN()
     with torch.no_grad():
         model.layer1[0].weight.fill_(0.1)
         model.layer4[0].weight.fill_(0.1)
         model.classifier.weight.fill_(0.1)
-        
+
     image = np.ones((64, 64, 3), dtype=np.uint8) * 50
     image[25:39, 25:39] = 250
     tensor = torch.tensor(image, dtype=torch.float32).permute(2, 0, 1).unsqueeze(0) / 255.0
     pred = PredictionResult("MEL", 1, 0.95, {"NV":0.05, "MEL":0.95}, [])
-    
+
     print("Executing Explainability Pipeline...")
     start = time.time()
     res1 = engine.evaluate(model, image, tensor, pred)
     print(f"Pipeline executed in {time.time() - start:.3f}s\n")
-    
+
     # [TEST 2] Range Verification
     print("[TEST 2] Range Verification (0-100 scale)")
     if res1.faithfulness and res1.faithfulness.faithfulness_score:
@@ -83,7 +85,7 @@ def run_verification():
         assert 0.0 <= score <= 100.0, "Faithfulness out of bounds!"
         assert res1.faithfulness.faithfulness_score.ci_width >= 0, "CI width cannot be negative."
     print("  -> PASSED\n")
-    
+
     # [TEST 3] Bootstrap Verification
     print("[TEST 3] Bootstrap Verification (Mean, Std, CI)")
     if res1.stability and res1.stability.stability_score:
@@ -119,7 +121,7 @@ def run_verification():
     print("[TEST 6] Numerical Robustness (Handling zero division, NaNs)")
     print("  Evaluators safely fall back to 0.0 on zero division and do not crash.")
     print("  -> PASSED\n")
-    
+
     # [TEST 7] Cross-Metric Consistency
     print("[TEST 7] Cross-Metric Consistency Validator")
     validator = ConsistencyValidator()
@@ -135,7 +137,7 @@ def run_verification():
         print(f"  Contradiction Found: {c['rule']}")
     assert len(contradictions) == 3, "Failed to detect all contradictions!"
     print("  -> PASSED\n")
-    
+
     # [TEST 8] Deterministic Execution
     print("[TEST 8] Deterministic Execution")
     env2 = ExecutionEnvironment(seed=42)

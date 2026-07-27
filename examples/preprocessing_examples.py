@@ -14,15 +14,9 @@ from omegaconf import OmegaConf
 
 from src.modules.preprocessing import (
     PreprocessingManager,
-    PreprocessingVisualizer,
     PreprocessingPipelineConfig,
+    PreprocessingVisualizer,
     TransformStageConfig,
-    MetadataConfig,
-)
-from src.modules.preprocessing.integration import (
-    PreprocessedSkinLesionDataset,
-    create_preprocessing_dataloader,
-    MetadataCollector,
 )
 
 

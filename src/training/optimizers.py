@@ -1,15 +1,17 @@
 """Optimizer framework for the training engine."""
 
-import torch
-from torch.optim.optimizer import Optimizer
 import collections
 from typing import Any
+
+import torch
+from torch.optim.optimizer import Optimizer
+
 
 class SAM(Optimizer):
     def __init__(self, params: Any, base_optimizer: Any, rho: float = 0.05, adaptive: bool = False, **kwargs: Any):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAM, self).__init__(params, defaults)
+        super().__init__(params, defaults)
 
         self.base_optimizer = base_optimizer(self.param_groups, **kwargs)
         self.param_groups = self.base_optimizer.param_groups

@@ -3,12 +3,12 @@
 import numpy as np
 import pytest
 
-from src.modules.evaluation.calibration.expected_calibration_error import expected_calibration_error
-from src.modules.evaluation.calibration.maximum_calibration_error import maximum_calibration_error
-from src.modules.evaluation.calibration.brier_score import brier_score
-from src.modules.evaluation.statistics.effect_size import cohens_d, glass_delta, cliffs_delta
 from src.modules.evaluation.benchmark.benchmark_loader import BenchmarkLoader
 from src.modules.evaluation.benchmark.benchmark_runner import BenchmarkRunner
+from src.modules.evaluation.calibration.brier_score import brier_score
+from src.modules.evaluation.calibration.expected_calibration_error import expected_calibration_error
+from src.modules.evaluation.calibration.maximum_calibration_error import maximum_calibration_error
+from src.modules.evaluation.statistics.effect_size import cliffs_delta, cohens_d, glass_delta
 
 
 def test_expected_calibration_error() -> None:
@@ -39,7 +39,7 @@ def test_cohens_d() -> None:
     y = np.array([2, 3, 4, 5, 6])
     d = cohens_d(x, y)
     assert isinstance(d, float)
-    
+
 def test_glass_delta() -> None:
     """Test Glass's delta computation."""
     x = np.array([1, 2, 3, 4, 5])

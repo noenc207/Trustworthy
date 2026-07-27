@@ -39,3 +39,9 @@ class ExplainabilityError(TrustworthyError):
 
 class ValidationError(TrustworthyError):
     """Raised when input data validation fails."""
+
+class DatasetNotFoundError(TrustworthyError):
+    """Raised when a required dataset file is missing."""
+    def __init__(self, message: str, detail: str = "") -> None:
+        super().__init__(message)
+        self.detail = detail

@@ -1,5 +1,7 @@
 import numpy as np
+
 from .base import BaseUncertaintyEstimator
+
 
 class VariationRatio(BaseUncertaintyEstimator):
     def estimate(self, probabilities: np.ndarray) -> dict:
@@ -16,5 +18,5 @@ class VariationRatio(BaseUncertaintyEstimator):
         else:
             # Not applicable for single forward pass really, but return 0
             vr_array = np.zeros(probabilities.shape[0])
-            
+
         return {"variation_ratio": float(np.mean(vr_array)), "vr_array": vr_array}

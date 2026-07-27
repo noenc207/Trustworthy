@@ -2,13 +2,15 @@
 Main Model Registry.
 """
 from __future__ import annotations
+
 import threading
 from typing import Any
 
+from src.modules.inference_engine.device_manager import DeviceManager
 from src.modules.model_registry.descriptor import ModelDescriptor
 from src.modules.model_registry.lifecycle import ModelLifecycle, ModelLifecycleState
 from src.modules.model_registry.loader import ModelLoader
-from src.modules.inference_engine.device_manager import DeviceManager
+
 
 class ModelRegistry:
     """
@@ -51,19 +53,19 @@ class ModelRegistry:
         """Lazy load a model and transition its lifecycle."""
         descriptor = self.get_descriptor(identifier)
         key = f"{descriptor.model_id}@{descriptor.version}"
-        
+
         with self._lock:
             lifecycle = self._lifecycles[key]
-            
+
             if lifecycle.current in {ModelLifecycleState.REGISTERED, ModelLifecycleState.UNLOADED}:
                 model = self._loader.load(descriptor, device)
                 lifecycle.transition_to(ModelLifecycleState.LOADED)
                 lifecycle.transition_to(ModelLifecycleState.READY)
                 return model
-                
+
             elif lifecycle.current in {ModelLifecycleState.READY, ModelLifecycleState.RUNNING}:
                 return self._loader.load(descriptor, device)  # Fetch from cache safely
-                
+
             else:
                 raise ValueError(
                     f"Cannot load model '{identifier}' in state: {lifecycle.current.value}"
@@ -73,7 +75,7 @@ class ModelRegistry:
         """Unload a model from cache and transition its lifecycle."""
         descriptor = self.get_descriptor(identifier)
         key = f"{descriptor.model_id}@{descriptor.version}"
-        
+
         with self._lock:
             lifecycle = self._lifecycles[key]
             self._loader.unload(descriptor, device)

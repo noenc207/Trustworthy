@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import Callable, Awaitable
+from collections.abc import Awaitable, Callable
 
 from fastapi import Request, Response
 from loguru import logger
@@ -22,16 +22,16 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         request_id = str(uuid.uuid4())
-        
+
         # Inject request ID into the request state for use in routers if needed
         request.state.request_id = request_id
 
         start_time = time.perf_counter()
-        
+
         try:
             response = await call_next(request)
             process_time = time.perf_counter() - start_time
-            
+
             # Log success
             logger.info(
                 f"{request.method} {request.url.path} "
@@ -39,13 +39,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 f"{process_time * 1000:.2f}ms "
                 f"(ID: {request_id})"
             )
-            
+
             # Add to response headers
             response.headers["X-Request-ID"] = request_id
             response.headers["X-Process-Time"] = str(process_time)
-            
+
             return response
-            
+
         except Exception as exc:
             process_time = time.perf_counter() - start_time
             # Log unhandled exceptions

@@ -1,9 +1,9 @@
 import torch.nn as nn
-from .registry import BackboneRegistry, ClassifierRegistry
-from .exceptions import ModelInitializationError
 
 # Import builders to populate the registry
-import src.modules.classifier.backbones.builders
+from .exceptions import ModelInitializationError
+from .registry import BackboneRegistry, ClassifierRegistry
+
 
 class BackboneBuilder:
     @staticmethod
@@ -32,7 +32,7 @@ class BackboneBuilder:
             model.out_features = in_features
             return model
         except Exception as e:
-            raise ModelInitializationError(f"Failed to build backbone {name}: {str(e)}", "BACKBONE_INIT_FAIL")
+            raise ModelInitializationError(f"Failed to build backbone {name}: {e!s}", "BACKBONE_INIT_FAIL")
 
 class ClassifierBuilder:
     @staticmethod
@@ -41,4 +41,4 @@ class ClassifierBuilder:
             cls_type = ClassifierRegistry.get(name)
             return cls_type(in_features, num_classes, dropout)
         except Exception as e:
-            raise ModelInitializationError(f"Failed to build classifier {name}: {str(e)}", "CLASSIFIER_INIT_FAIL")
+            raise ModelInitializationError(f"Failed to build classifier {name}: {e!s}", "CLASSIFIER_INIT_FAIL")

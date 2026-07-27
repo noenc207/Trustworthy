@@ -2,8 +2,8 @@
 Verification script for Milestone 5 — Auth Service + Router.
 Run from project root: python verify_m5.py
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -22,8 +22,9 @@ print("\n=== Milestone 5 Verification: Auth Service + Router ===\n")
 
 # 1. AuthService
 try:
-    from src.api.services.auth import AuthService
     import inspect
+
+    from src.api.services.auth import AuthService
     methods = [m[0] for m in inspect.getmembers(AuthService, predicate=inspect.iscoroutinefunction)]
     assert "authenticate_user" in methods
     assert "register_user" in methods
@@ -33,7 +34,7 @@ except Exception as e:
 
 # 2. Dependencies
 try:
-    from src.api.dependencies.services import get_user_repository, get_auth_service
+    from src.api.dependencies.services import get_auth_service, get_user_repository
     assert inspect.iscoroutinefunction(get_user_repository) or inspect.isfunction(get_user_repository)
     assert inspect.iscoroutinefunction(get_auth_service) or inspect.isfunction(get_auth_service)
     ok("dependencies.services — DI functions for repo and auth service exist")

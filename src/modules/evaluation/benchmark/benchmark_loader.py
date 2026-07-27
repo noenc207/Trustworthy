@@ -1,9 +1,8 @@
 """Loader for external benchmarks."""
 
+import typing
 from typing import Any
 
-
-import typing
 
 class BenchmarkLoader:
     """Loads benchmark definitions and checks for required datasets."""

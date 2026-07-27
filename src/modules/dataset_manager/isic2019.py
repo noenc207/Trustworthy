@@ -78,7 +78,7 @@ class ISIC2019Manager(BaseDatasetManager):
             })
 
         cleaned_df = pd.DataFrame(cleaned_records)
-        
+
         # Save unified labels
         cleaned_path = self.labels_dir / "cleaned.csv"
         cleaned_df.to_csv(cleaned_path, index=False)

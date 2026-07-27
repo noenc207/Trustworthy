@@ -4,7 +4,6 @@ Handles business logic for receiving, validating, and saving image uploads secur
 """
 from __future__ import annotations
 
-import os
 import shutil
 from pathlib import Path
 from typing import IO
@@ -74,7 +73,7 @@ class UploadService:
             raise InvalidImageError(
                 message=f"File exceeds maximum allowed size ({self.max_size / 1024 / 1024:.2f} MB)"
             )
-            
+
         if size_bytes == 0:
             destination_path.unlink(missing_ok=True)
             raise InvalidImageError(message="Uploaded file is empty")
@@ -87,5 +86,5 @@ class UploadService:
             content_type=file.content_type or "application/octet-stream",
             size_bytes=size_bytes,
         )
-        
+
         return await self.upload_repo.create(obj_in=upload_in)

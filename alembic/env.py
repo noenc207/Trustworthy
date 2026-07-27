@@ -21,24 +21,19 @@ from __future__ import annotations
 import asyncio
 from logging.config import fileConfig
 
+from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
-
-from alembic import context
 
 # ---------------------------------------------------------------------------
 # Import application Base so Alembic can discover all ORM models
 # for autogenerate. Each model module must be imported here (or imported
 # transitively via src.api.db.models) before autogenerate is called.
 # ---------------------------------------------------------------------------
-from src.api.db.base_model import Base  # noqa: F401 — must be imported for metadata
+from src.api.db.base_model import Base
 
 # Import all model modules here so their tables register on Base.metadata.
-from src.api.db.models.user import User          # Milestone 2
-from src.api.db.models.upload import Upload      # Milestone 2
-from src.api.db.models.prediction import Prediction  # Milestone 2
-
 from src.core.config import get_settings
 
 # ---------------------------------------------------------------------------

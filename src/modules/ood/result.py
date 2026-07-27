@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional
+
 
 @dataclass(frozen=True)
 class OODResult:
@@ -8,6 +8,6 @@ class OODResult:
     confidence: float
     algorithm: str
     threshold: float
-    reason: Optional[str]
+    reason: str | None
     execution_time: float
     warnings: list[str] = field(default_factory=list)

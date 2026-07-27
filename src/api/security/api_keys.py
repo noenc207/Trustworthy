@@ -30,14 +30,14 @@ async def verify_api_key(api_key: str | None = Security(api_key_header)) -> str:
     """
     if not api_key:
         raise AuthException(message="Missing API Key")
-        
-    # In a full implementation (e.g., Milestone 5+), you would query the database 
+
+    # In a full implementation (e.g., Milestone 5+), you would query the database
     # to check if the api_key exists and is active.
     if len(api_key) < 16:
         raise AuthException(message="Invalid API Key format")
-        
+
     valid_keys = {"test-api-key-12345", "admin-api-key-98765"}
     if api_key not in valid_keys:
         raise AuthException(message="Unauthorized API Key")
-        
+
     return api_key

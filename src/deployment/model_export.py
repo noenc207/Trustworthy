@@ -14,7 +14,6 @@ ONNX Export best practices:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import torch
 import torch.nn as nn
@@ -111,9 +110,9 @@ class ModelExporter:
     def _validate_onnx(self, onnx_path: Path) -> None:
         """Validate ONNX model structure and run consistency check."""
         try:
+            import numpy as np
             import onnx
             import onnxruntime as ort
-            import numpy as np
 
             model = onnx.load(str(onnx_path))
             onnx.checker.check_model(model)

@@ -11,16 +11,14 @@ Accepts uploaded image ID and returns full prediction with:
 """
 from __future__ import annotations
 
-from uuid import UUID
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from loguru import logger
 
-from src.api.schemas.prediction import PredictionRequest, PredictionResponse
 from src.api.dependencies.auth import get_current_user
 from src.api.dependencies.services import get_prediction_service
+from src.api.schemas.prediction import PredictionRequest, PredictionResponse
 from src.api.services.prediction import PredictionService
-from src.core.exceptions import ImageQualityError, InferenceError, DatasetNotFoundError
+from src.core.exceptions import DatasetNotFoundError, ImageQualityError, InferenceError
 
 router = APIRouter()
 
@@ -62,7 +60,7 @@ async def predict(
     )
     try:
         prediction = await prediction_service.run_prediction(
-            upload_id=request.image_id, 
+            upload_id=request.image_id,
             user_id=current_user['sub']
         )
         # Convert ORM model to Pydantic PredictionResponse schema via mapping

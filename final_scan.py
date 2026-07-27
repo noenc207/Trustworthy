@@ -10,11 +10,11 @@ for root, dirs, files in os.walk('src'):
         if not f.endswith('.py'):
             continue
         filepath = os.path.join(root, f)
-        with open(filepath, 'r', encoding='utf-8') as fh:
+        with open(filepath, encoding='utf-8') as fh:
             lines = fh.readlines()
             for i, line in enumerate(lines):
                 stripped = line.strip()
-                
+
                 # --- pass stubs ---
                 if stripped == 'pass':
                     if any(k in f for k in ['interfaces.py', 'base.py', 'exceptions.py']):
@@ -28,17 +28,17 @@ for root, dirs, files in os.walk('src'):
                     if is_legit:
                         continue
                     real_issues.append(f'PASS|{filepath}:{i+1}')
-                
+
                 # --- placeholder text ---
                 elif 'placeholder' in stripped.lower():
                     real_issues.append(f'PLACEHOLDER|{filepath}:{i+1}|{stripped}')
-                
+
                 # --- NotImplementedError ---
                 elif re.search(r'raise NotImplementedError', stripped):
                     if any(k in f for k in ['interfaces.py', 'base.py', 'wrappers']):
                         continue
                     real_issues.append(f'NOT_IMPL|{filepath}:{i+1}|{stripped}')
-                
+
                 # --- TODO/FIXME/HACK ---
                 elif re.search(r'#\s*(TODO|FIXME|HACK)', stripped, re.IGNORECASE):
                     real_issues.append(f'TODO_FIXME|{filepath}:{i+1}|{stripped}')

@@ -14,7 +14,6 @@ import pandas as pd
 from loguru import logger
 from sklearn.model_selection import StratifiedKFold, train_test_split
 
-from src.core.constants import LesionClass
 from src.modules.dataset_manager.config import DatasetConfig
 
 
@@ -27,7 +26,7 @@ class BaseDatasetManager(ABC):
     def __init__(self, config: DatasetConfig) -> None:
         self.config = config
         self.base_path = Path(self.config.base_path)
-        
+
         # Standardized subdirectories
         self.raw_dir = self.base_path / "raw"
         self.processed_dir = self.base_path / "processed"
@@ -44,7 +43,7 @@ class BaseDatasetManager(ABC):
             self.labels_dir, self.splits_dir, self.cache_dir, self.aug_dir
         ]:
             directory.mkdir(parents=True, exist_ok=True)
-            
+
     @abstractmethod
     def process_and_clean(self) -> pd.DataFrame:
         """
@@ -73,7 +72,7 @@ class BaseDatasetManager(ABC):
         # Validate images
         for _, row in df.iterrows():
             img_path = Path(row["path"])
-            
+
             # Check existence
             if not img_path.exists():
                 missing_count += 1
@@ -102,7 +101,7 @@ class BaseDatasetManager(ABC):
         train_ratio = self.config.splits.train_ratio
         val_ratio = self.config.splits.val_ratio
         test_ratio = self.config.splits.test_ratio
-        
+
         # Verify ratios sum to 1.0 (allow small float variations)
         assert abs((train_ratio + val_ratio + test_ratio) - 1.0) < 1e-5, "Splits must sum to 1.0"
 
@@ -131,7 +130,7 @@ class BaseDatasetManager(ABC):
         self.splits_dir.mkdir(exist_ok=True)
         for name, data in [("train", X_train), ("val", X_val), ("test", X_test)]:
             pd.Series(data).to_csv(self.splits_dir / f"{name}_indices.csv", index=False, header=False)
-            
+
         logger.info(f"Splits saved: Train={len(X_train)}, Val={len(X_val)}, Test={len(X_test)}")
 
     def generate_kfolds(self, df: pd.DataFrame) -> None:
@@ -152,7 +151,7 @@ class BaseDatasetManager(ABC):
         for fold, (train_idx, val_idx) in enumerate(kf.split(X, y)):
             fold_dir = self.splits_dir / f"fold_{fold}"
             fold_dir.mkdir(exist_ok=True)
-            
+
             pd.Series(X[train_idx]).to_csv(fold_dir / "train_indices.csv", index=False, header=False)
             pd.Series(X[val_idx]).to_csv(fold_dir / "val_indices.csv", index=False, header=False)
 
@@ -170,5 +169,5 @@ class BaseDatasetManager(ABC):
 
         with open(self.metadata_dir / "stats.json", "w") as f:
             json.dump(stats, f, indent=4)
-            
+
         logger.info("Dataset statistics saved to metadata/stats.json")

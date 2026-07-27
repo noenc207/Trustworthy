@@ -50,10 +50,10 @@ async def login(
     if not user:
         logger.warning(f"Failed login attempt for user: {form_data.username}")
         raise AuthException(message="Incorrect username or password")
-        
+
     if not user.is_active:
         logger.warning(f"Inactive user login attempt: {form_data.username}")
         raise AuthException(message="Inactive user account")
-        
+
     logger.info(f"User logged in successfully: {user.username}")
     return auth_service.generate_tokens(user)

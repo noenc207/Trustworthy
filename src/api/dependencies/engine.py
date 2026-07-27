@@ -13,29 +13,26 @@ from __future__ import annotations
 from fastapi import HTTPException, status
 from loguru import logger
 
-from src.modules.classification.classifier import SkinLesionClassifier
-from src.modules.ood_detection.detector import OODDetector, OODMethod
-from src.modules.uncertainty.estimator import MCDropoutEstimator
 from src.modules.calibration.calibrator import TemperatureScaling
-from src.modules.explainability.gradcam import GradCAMExplainer
-from src.modules.quality_assessment.assessor import ImageQualityAssessor
+from src.modules.classification.classifier import SkinLesionClassifier
 from src.modules.clinical_recommendation.engine import ClinicalRecommendationEngine
-from src.modules.inference_engine.module_registry import AIModuleRegistry
-from src.modules.inference_engine.executor import PipelineExecutor
-from src.modules.inference_engine.context import PipelineConfig
-from src.modules.inference_engine.stages import (
-    QualityAssessmentStage,
-    PreprocessingStage,
-    ClassificationStage,
-    OODDetectionStage,
-    UncertaintyEstimationStage,
-    CalibrationStage,
-    ExplainabilityStage,
-    ClinicalRecommendationStage,
-)
 
 # Legacy import kept for PredictionService backwards compatibility
 from src.modules.inference_engine.engine import TrustworthyInferenceEngine
+from src.modules.inference_engine.executor import PipelineExecutor
+from src.modules.inference_engine.module_registry import AIModuleRegistry
+from src.modules.inference_engine.stages import (
+    CalibrationStage,
+    ClassificationStage,
+    ClinicalRecommendationStage,
+    OODDetectionStage,
+    PreprocessingStage,
+    QualityAssessmentStage,
+    UncertaintyEstimationStage,
+)
+from src.modules.ood_detection.detector import OODDetector, OODMethod
+from src.modules.quality_assessment.assessor import ImageQualityAssessor
+from src.modules.uncertainty.estimator import MCDropoutEstimator
 
 _executor: PipelineExecutor | None = None
 _legacy_engine: TrustworthyInferenceEngine | None = None
@@ -50,6 +47,7 @@ def _build_preprocessor(image_size: int = 224):
     import cv2
     import numpy as np
     import torch
+
     from src.core.constants import IMAGE_MEAN, IMAGE_STD
 
     def preprocess(image: np.ndarray) -> torch.Tensor:

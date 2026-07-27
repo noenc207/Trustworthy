@@ -1,12 +1,14 @@
-import pytest
 import numpy as np
+import pytest
+
 from src.modules.calibration.config import CalibrationConfig
-from src.modules.calibration.stage import CalibrationStage
 from src.modules.calibration.exceptions import MissingPredictionArtifactError
-from src.modules.inference_engine.context import PipelineContext, PipelineConfig
-from src.modules.classifier.result import PredictionResult, InferenceSession, PredictionCandidate
+from src.modules.calibration.metrics import compute_ece_mce, safe_clip
+from src.modules.calibration.stage import CalibrationStage
 from src.modules.calibration.strategies.temperature import TemperatureScalingStrategy
-from src.modules.calibration.metrics import compute_ece_mce, compute_nll, safe_clip
+from src.modules.classifier.result import PredictionCandidate, PredictionResult
+from src.modules.inference_engine.context import PipelineConfig, PipelineContext
+
 
 @pytest.fixture
 def base_context():
@@ -21,7 +23,7 @@ def mock_prediction():
         probabilities={"MEL": 0.9, "NV": 0.05, "BCC": 0.05}, top_k=[PredictionCandidate("MEL", 0, 0.9)]
     )
     return pred
-    
+
 @pytest.fixture
 def mock_logits():
     return np.array([[2.89, 0.0, 0.0]])
@@ -61,17 +63,17 @@ def test_calibration_stage_rollback(base_context, mock_prediction, mock_logits):
     base_context.artifacts["classification"] = (mock_prediction, None)
     base_context.artifacts["logits"] = mock_logits
     base_context.artifacts["true_labels"] = 0
-    
+
     config = CalibrationConfig(algorithm="temperature")
     # Forcing a high temperature which will ruin calibration for a single perfectly correct sample
-    
+
     stage = CalibrationStage(config)
     stage.initialize()
     stage.engine.strategy.temperature = 10.0 # override fitted
-    
+
     ctx = stage.execute(base_context)
     calib = ctx.artifacts["calibration"]
-    
+
     assert calib.rollback is True
     assert calib.is_calibrated is False
     assert calib.confidence_after == mock_prediction.confidence
@@ -86,7 +88,7 @@ def test_metrics_safe_clip():
     clipped = safe_clip(probs)
     assert np.all(clipped > 0.0)
     assert np.all(clipped < 1.0)
-    
+
 def test_metrics_ece():
     probs = np.array([[0.9, 0.1], [0.8, 0.2]])
     labels = np.array([0, 1])

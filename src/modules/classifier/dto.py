@@ -1,6 +1,8 @@
 from dataclasses import dataclass, field
-from typing import Any, Optional, List, Dict
+from typing import Any
+
 import numpy as np
+
 
 @dataclass(frozen=True)
 class PredictionCandidate:
@@ -13,13 +15,13 @@ class PredictionResult:
     prediction: str
     class_index: int
     class_name: str
-    probabilities: Dict[str, float]
+    probabilities: dict[str, float]
     confidence: float
-    logits: Optional[np.ndarray] = None
-    embedding: Optional[np.ndarray] = None
+    logits: np.ndarray | None = None
+    embedding: np.ndarray | None = None
     runtime_ms: float = 0.0
-    warnings: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    warnings: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     valid: bool = True
     status: str = "SUCCESS"
 
@@ -27,11 +29,11 @@ class PredictionResult:
 class PredictionSummary:
     total_predictions: int
     mean_confidence: float
-    latency_stats: Dict[str, float]
+    latency_stats: dict[str, float]
 
 @dataclass(frozen=True)
 class BatchPredictionResult:
-    predictions: List[PredictionResult]
+    predictions: list[PredictionResult]
     summary: PredictionSummary
     batch_runtime_ms: float
     valid: bool = True
@@ -55,9 +57,9 @@ class CheckpointMetadata:
     python_version: str
     creation_timestamp: str
     git_commit_hash: str
-    class_mapping: Dict[int, str]
+    class_mapping: dict[int, str]
     configuration_hash: str
-    training_metadata: Dict[str, Any]
+    training_metadata: dict[str, Any]
 
 @dataclass(frozen=True)
 class RuntimeMetadata:

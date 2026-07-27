@@ -1,9 +1,9 @@
+import pytest
 import torch
 import torch.nn as nn
-import pytest
 
-from src.modules.explainability.digital_twin.simulator import DigitalTwinSimulator
 from src.modules.explainability.counterfactual.recourse import CounterfactualRecourseGenerator
+from src.modules.explainability.digital_twin.simulator import DigitalTwinSimulator
 
 
 class DummyGenerativeModel(nn.Module):
@@ -37,14 +37,14 @@ class DummyClassifier(nn.Module):
 def test_digital_twin_simulator():
     model = DummyGenerativeModel()
     simulator = DigitalTwinSimulator(generative_model=model, seed=42)
-    
+
     x = torch.randn(2, 10)
-    
+
     # Test simulate output
     output = simulator.simulate(x)
     assert output.shape == (2, 10)
     assert not output.requires_grad
-    
+
     # Test determinism
     simulator1 = DigitalTwinSimulator(generative_model=model, seed=123)
     simulator2 = DigitalTwinSimulator(generative_model=model, seed=123)
@@ -67,7 +67,7 @@ def test_digital_twin_simulator():
 def test_counterfactual_recourse_generator():
     generator = DummyGenerativeModel()
     classifier = DummyClassifier()
-    
+
     cf_generator = CounterfactualRecourseGenerator(
         classifier=classifier,
         generator=generator,
@@ -76,17 +76,17 @@ def test_counterfactual_recourse_generator():
         max_iter=10,
         seed=42
     )
-    
+
     z_orig = torch.randn(2, 10)
     target_class = torch.tensor([1, 0])
-    
+
     z_opt = cf_generator.generate(z_orig, target_class)
-    
+
     assert z_opt.shape == (2, 10)
     # The output should not be exactly the same as the input, as it should be optimized
     # But it shouldn't be too far if lambda_reg is high or iterations are few
     assert not torch.allclose(z_orig, z_opt)
-    
+
     # Test determinism
     cf_gen1 = CounterfactualRecourseGenerator(classifier, generator, seed=123, max_iter=5)
     cf_gen2 = CounterfactualRecourseGenerator(classifier, generator, seed=123, max_iter=5)

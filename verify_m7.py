@@ -2,8 +2,8 @@
 Verification script for Milestone 7 — Dependencies + Middleware.
 Run from project root: python verify_m7.py
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -22,8 +22,9 @@ print("\n=== Milestone 7 Verification: Dependencies + Middleware ===\n")
 
 # 1. Logging Middleware
 try:
-    from src.api.middleware.logging import RequestLoggingMiddleware
     from starlette.middleware.base import BaseHTTPMiddleware
+
+    from src.api.middleware.logging import RequestLoggingMiddleware
     assert issubclass(RequestLoggingMiddleware, BaseHTTPMiddleware)
     ok("middleware.logging — RequestLoggingMiddleware defined correctly")
 except Exception as e:
@@ -31,8 +32,9 @@ except Exception as e:
 
 # 2. Redis Dependency
 try:
-    from src.api.dependencies.redis import init_redis, close_redis, get_redis
     import inspect
+
+    from src.api.dependencies.redis import close_redis, get_redis, init_redis
     assert inspect.iscoroutinefunction(init_redis)
     assert inspect.iscoroutinefunction(close_redis)
     assert inspect.isasyncgenfunction(get_redis) or inspect.iscoroutinefunction(get_redis)
@@ -42,8 +44,9 @@ except Exception as e:
 
 # 3. Rate Limiter Dependency
 try:
-    from src.api.dependencies.rate_limit import RateLimiter
     import inspect
+
+    from src.api.dependencies.rate_limit import RateLimiter
     assert inspect.iscoroutinefunction(RateLimiter.__call__)
     ok("dependencies.rate_limit — RateLimiter dependency callable defined correctly")
 except Exception as e:

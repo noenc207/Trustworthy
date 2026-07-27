@@ -1,12 +1,13 @@
-from src.modules.inference_engine.stages import PipelineStage, StagePolicy
 from src.modules.inference_engine.context import PipelineContext
+from src.modules.inference_engine.stages import PipelineStage, StagePolicy
 from src.modules.ood.config import OODConfig
 from src.modules.ood.detector import DefaultOODDetector
 from src.modules.ood.exceptions import MissingClassificationArtifactError
 
+
 class OODDetectionStage(PipelineStage):
     """Pipeline stage for Out-of-Distribution evaluation."""
-    
+
     def __init__(self, config: OODConfig, policy: StagePolicy | None = None):
         super().__init__(name="OODDetectionStage", policy=policy)
         self.config = config
@@ -24,14 +25,14 @@ class OODDetectionStage(PipelineStage):
     def execute(self, context: PipelineContext) -> PipelineContext:
         if not self.validate(context):
             raise MissingClassificationArtifactError("Missing classification artifact.")
-            
+
         pred, session = context.artifacts["classification"]
-        
+
         # Raw logits not typically saved in DTO, fallback to probs
         ood_result = self.detector.evaluate(pred, raw_logits=None)
-        
+
         context.artifacts["ood"] = ood_result
-        
+
         return context
 
     def cleanup(self) -> None:

@@ -267,7 +267,8 @@ def train(cfg: DictConfig) -> None:
     pl.seed_everything(cfg.get("seed", 42), workers=True)
 
     # Data
-    datamodule = SkinLesionDataModule(cfg)
+    from src.training.data_module import SkinLesionDataModule as RealDataModule
+    datamodule = RealDataModule(cfg)
 
     # Model (Inject via factory or config if possible, fallback for script run)
     model_instance = None

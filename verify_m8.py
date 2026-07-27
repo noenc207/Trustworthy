@@ -2,8 +2,8 @@
 Verification script for Milestone 8 — Prediction Service (ML Wiring).
 Run from project root: python verify_m8.py
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -22,8 +22,9 @@ print("\n=== Milestone 8 Verification: ML Inference Engine Wiring ===\n")
 
 # 1. PredictionService methods
 try:
-    from src.api.services.prediction import PredictionService
     import inspect
+
+    from src.api.services.prediction import PredictionService
     methods = [m[0] for m in inspect.getmembers(PredictionService, predicate=inspect.iscoroutinefunction)]
     assert "run_prediction" in methods
     ok("services.prediction — PredictionService has run_prediction coroutine")

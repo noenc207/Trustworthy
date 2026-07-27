@@ -2,8 +2,11 @@
 Model registry and factory for classification backbones.
 """
 from dataclasses import dataclass
+
 import torch.nn as nn
+
 from src.modules.classification.classifier import SkinLesionClassifier
+
 
 @dataclass(frozen=True)
 class BackboneSpec:
@@ -48,22 +51,22 @@ class ModelFactory:
             pretrained=pretrained,
             drop_rate=drop_rate
         )
-        
+
         if freeze_backbone:
             for param in model.backbone.parameters():
                 param.requires_grad = False
-                
+
         if freeze_bn:
             for module in model.backbone.modules():
                 if isinstance(module, nn.modules.batchnorm._BatchNorm):
                     module.eval()
                     for param in module.parameters():
                         param.requires_grad = False
-                        
+
         if gradient_checkpointing:
             if hasattr(model.backbone, 'set_grad_checkpointing'):
                 model.backbone.set_grad_checkpointing(True)
-                
+
         return model
 
     @staticmethod
@@ -71,7 +74,7 @@ class ModelFactory:
         if name not in SUPPORTED_BACKBONES:
             raise ValueError(f"Backbone {name} not supported. Available: {list(SUPPORTED_BACKBONES.keys())}")
         return SUPPORTED_BACKBONES[name]
-    
-    @staticmethod  
+
+    @staticmethod
     def list_available() -> list[str]:
         return list(SUPPORTED_BACKBONES.keys())

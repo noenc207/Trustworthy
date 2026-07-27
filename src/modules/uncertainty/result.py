@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Optional, Any
+from typing import Any
+
 
 @dataclass(frozen=True)
 class UncertaintyResult:
@@ -12,6 +13,6 @@ class UncertaintyResult:
     algorithm: str
     execution_time: float
     threshold: float
-    reason: Optional[str]
+    reason: str | None
     warnings: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)

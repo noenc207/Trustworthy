@@ -4,21 +4,19 @@ Coordinates image loading, preprocessing, model inference, and database persiste
 """
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any
 from uuid import UUID
 
+import cv2
 import numpy as np
 import torch
-import cv2
 from anyio import to_thread
 
 from src.api.db.models.prediction import Prediction
 from src.api.db.repositories.prediction import PredictionCreate, PredictionRepository
 from src.api.db.repositories.upload import UploadRepository
 from src.core.config import get_settings
-from src.core.constants import IMAGE_MEAN, IMAGE_STD, DEFAULT_IMAGE_SIZE
+from src.core.constants import DEFAULT_IMAGE_SIZE, IMAGE_MEAN, IMAGE_STD
 from src.core.exceptions import DatasetNotFoundError, InferenceError
 from src.modules.inference_engine.engine import TrustworthyInferenceEngine
 
@@ -53,10 +51,10 @@ def _load_and_preprocess_image(file_path: Path) -> tuple[np.ndarray, torch.Tenso
 
     # Convert to CHW tensor
     img_chw = np.transpose(img_normalized, (2, 0, 1))
-    
+
     # Add batch dimension
     input_tensor = torch.from_numpy(img_chw).unsqueeze(0).float()
-    
+
     return image_array, input_tensor
 
 
@@ -82,7 +80,7 @@ class PredictionService:
         upload_record = await self.upload_repo.get(upload_id)
         if not upload_record:
             raise DatasetNotFoundError(message="Upload not found")
-            
+
         if str(upload_record.user_id) != str(user_id):
             # Do not allow users to run predictions on other users' uploads
             raise DatasetNotFoundError(message="Upload not found")
@@ -93,7 +91,7 @@ class PredictionService:
             return existing_prediction
 
         file_path = self.upload_dir / upload_record.filename
-        
+
         # Load and preprocess image in a thread pool
         image_array, input_tensor = await to_thread.run_sync(
             _load_and_preprocess_image, file_path

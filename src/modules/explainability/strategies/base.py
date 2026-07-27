@@ -61,7 +61,7 @@ class BaseCAMStrategy(ExplainerStrategy):
         if raw.ndim != 2:
             import logging
             logging.warning(f"Unexpected heatmap shape {raw.shape}. Attempting to normalize anyway.")
-            
+
         # 2. NaN/Inf trapping
         if not np.isfinite(raw).all():
             import logging
@@ -75,7 +75,7 @@ class BaseCAMStrategy(ExplainerStrategy):
         h = np.maximum(raw, 0)
         h_max = np.max(h)
         h = h / h_max if h_max > 1e-08 else np.zeros_like(h, dtype=np.float32)
-        
+
         # 4. Standardize memory layout
         h = np.ascontiguousarray(h, dtype=np.float32)
         self.normalized_heatmap = h
@@ -83,7 +83,6 @@ class BaseCAMStrategy(ExplainerStrategy):
 
     def get_metadata(self) -> dict[str, Any]:
         """Return backend metadata for reproducibility."""
-        import torch
         device = str(next(self.model.parameters()).device) if self.model else "unknown"
         return {
             "backend": "native",

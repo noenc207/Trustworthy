@@ -1,7 +1,8 @@
 """Integration test for preprocessing pipeline."""
-import numpy as np
-from pathlib import Path
 import tempfile
+from pathlib import Path
+
+import numpy as np
 
 print("=" * 70)
 print("PREPROCESSING PIPELINE INTEGRATION TEST")
@@ -12,15 +13,9 @@ print("\n[1/6] Testing imports...")
 try:
     from src.modules.preprocessing import (
         PreprocessingManager,
-        Pipeline,
         PreprocessingPipelineConfig,
-        TransformStageConfig,
         PreprocessingVisualizer,
-    )
-    from src.modules.preprocessing.integration import (
-        PreprocessedSkinLesionDataset,
-        create_preprocessing_dataloader,
-        MetadataCollector,
+        TransformStageConfig,
     )
     print("✅ All imports successful")
 except Exception as e:
@@ -115,7 +110,7 @@ try:
         )
 
         assert comparison_path.exists()
-        print(f"✅ Saved comparison visualization")
+        print("✅ Saved comparison visualization")
 
         # Save metadata
         img, metadata = manager.preprocess(
@@ -129,7 +124,7 @@ try:
         PreprocessingVisualizer.save_metadata_report(metadata, report_path)
 
         assert (Path(tmpdir) / "test_report.json").exists()
-        print(f"✅ Saved metadata reports")
+        print("✅ Saved metadata reports")
 except Exception as e:
     print(f"❌ Visualization failed: {e}")
     exit(1)
@@ -150,7 +145,7 @@ try:
     reenabled_stages = len(pipeline.get_enabled_stages_info())
     assert reenabled_stages == original_stages
 
-    print(f"✅ Dynamic stage control working")
+    print("✅ Dynamic stage control working")
     print(f"   - Original: {original_stages} stages")
     print(f"   - After disable: {disabled_stages} stages")
     print(f"   - After re-enable: {reenabled_stages} stages")

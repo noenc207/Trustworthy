@@ -1,15 +1,15 @@
-import numpy as np
-from typing import Any, List
 from pathlib import Path
-import time
-import uuid
+from typing import Any
 
-from src.modules.classifier.strategies.base import AbstractClassifierStrategy
+import numpy as np
+
 from src.modules.classifier.interfaces import BackendAdapter
-from src.modules.classifier.result import ModelInfo, PredictionResult, PredictionCandidate
+from src.modules.classifier.result import ModelInfo, PredictionCandidate, PredictionResult
+from src.modules.classifier.strategies.base import AbstractClassifierStrategy
+
 
 class EfficientNetStrategy(AbstractClassifierStrategy):
-    
+
     def __init__(self, class_names: list[str]):
         self.class_names = class_names
         self.model = None
@@ -32,7 +32,7 @@ class EfficientNetStrategy(AbstractClassifierStrategy):
     def predict(self, tensor: Any, backend_adapter: BackendAdapter) -> Any:
         return backend_adapter.predict(self.model, tensor)
 
-    def predict_batch(self, tensors: List[Any], backend_adapter: BackendAdapter) -> List[PredictionResult]:
+    def predict_batch(self, tensors: list[Any], backend_adapter: BackendAdapter) -> list[PredictionResult]:
         import torch
         if isinstance(tensors, list):
             if isinstance(tensors[0], np.ndarray):
@@ -65,26 +65,26 @@ class EfficientNetStrategy(AbstractClassifierStrategy):
         # Assuming raw_output is a numpy array of logits
         if hasattr(raw_output, "detach"): # fallback if still torch tensor
             raw_output = raw_output.detach().cpu().numpy()
-            
+
         logits = np.squeeze(raw_output)
         probs = self._normalize_logits(logits)
-        
+
         predicted_idx = int(np.argmax(probs))
         predicted_class = self.class_names[predicted_idx] if predicted_idx < len(self.class_names) else f"class_{predicted_idx}"
         confidence = float(probs[predicted_idx])
-        
+
         prob_dict = {
             (self.class_names[i] if i < len(self.class_names) else f"class_{i}"): float(probs[i])
             for i in range(len(probs))
         }
-        
+
         # Sort for top_k
         sorted_indices = np.argsort(probs)[::-1]
         top_k = []
         for i in sorted_indices[:5]:
             cls_name = self.class_names[i] if i < len(self.class_names) else f"class_{i}"
             top_k.append(PredictionCandidate(class_name=cls_name, class_index=int(i), probability=float(probs[i])))
-            
+
         return {
             "predicted_class": predicted_class,
             "predicted_index": predicted_idx,

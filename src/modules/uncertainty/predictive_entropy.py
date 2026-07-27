@@ -1,5 +1,7 @@
 import numpy as np
+
 from .base import BaseUncertaintyEstimator
+
 
 class PredictiveEntropy(BaseUncertaintyEstimator):
     def estimate(self, probabilities: np.ndarray) -> dict:

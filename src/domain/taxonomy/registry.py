@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
-from typing import Optional
+from dataclasses import dataclass
+
 
 @dataclass(frozen=True)
 class ClassMetadata:
@@ -15,25 +15,25 @@ class ClassMetadata:
 
 class ClassRegistry:
     """Immutable taxonomy registry mapping class IDs to extensive clinical metadata."""
-    
+
     def __init__(self) -> None:
         self._registry: dict[int, ClassMetadata] = {}
-        
+
     def register_class(
-        self, 
-        class_id: int, 
-        name: str, 
-        icd_code: str, 
-        who_name: str, 
-        alias: str, 
-        risk_level: str, 
-        clinical_priority: int, 
-        description: str, 
+        self,
+        class_id: int,
+        name: str,
+        icd_code: str,
+        who_name: str,
+        alias: str,
+        risk_level: str,
+        clinical_priority: int,
+        description: str,
         color: str
     ) -> None:
         if class_id in self._registry:
             raise ValueError(f"Class ID {class_id} is already registered.")
-            
+
         self._registry[class_id] = ClassMetadata(
             class_id=class_id,
             name=name,
@@ -45,7 +45,7 @@ class ClassRegistry:
             description=description,
             color=color
         )
-        
+
     def get_metadata(self, class_id: int) -> dict:
         if class_id not in self._registry:
             raise KeyError(f"Class ID {class_id} not found in taxonomy.")
@@ -60,7 +60,7 @@ class ClassRegistry:
             "description": meta.description,
             "color": meta.color
         }
-        
+
     def get_name(self, class_id: int) -> str:
         if class_id not in self._registry:
             raise KeyError(f"Class ID {class_id} not found in taxonomy.")

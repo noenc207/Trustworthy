@@ -2,13 +2,15 @@
 Model Loading and Caching.
 """
 from __future__ import annotations
+
 import threading
 from typing import Any
 
+from src.modules.inference_engine.device_manager import DeviceManager
+from src.modules.model_registry.adapter import BackendAdapter
 from src.modules.model_registry.descriptor import ModelDescriptor
 from src.modules.model_registry.resolver import WeightResolverProtocol
-from src.modules.model_registry.adapter import BackendAdapter
-from src.modules.inference_engine.device_manager import DeviceManager
+
 
 class ModelLoader:
     """
@@ -16,8 +18,8 @@ class ModelLoader:
     using injected resolvers and backend adapters.
     """
     def __init__(
-        self, 
-        resolver: WeightResolverProtocol, 
+        self,
+        resolver: WeightResolverProtocol,
         adapters: dict[str, BackendAdapter]
     ) -> None:
         self.resolver = resolver
@@ -30,7 +32,7 @@ class ModelLoader:
 
     def load(self, descriptor: ModelDescriptor, device: DeviceManager) -> Any:
         cache_key = self._get_cache_key(descriptor, device)
-        
+
         with self._lock:
             if cache_key in self._cache:
                 return self._cache[cache_key]
@@ -50,11 +52,11 @@ class ModelLoader:
 
             # 4. Load
             model = adapter.load_model(path, device)
-            
+
             # 5. Cache
             self._cache[cache_key] = model
             return model
-            
+
     def unload(self, descriptor: ModelDescriptor, device: DeviceManager) -> None:
         cache_key = self._get_cache_key(descriptor, device)
         with self._lock:

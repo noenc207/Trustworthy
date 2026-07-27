@@ -3,8 +3,8 @@ Unit tests for Image Quality Assessment.
 """
 from __future__ import annotations
 
-import pytest
 import numpy as np
+import pytest
 
 
 @pytest.mark.unit

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def run_mc_dropout(model, x, num_samples=30):
     """Run model with dropout enabled multiple times."""
     import torch

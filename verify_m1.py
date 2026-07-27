@@ -2,8 +2,8 @@
 Verification script for Milestone 1 — Database Foundation.
 Run from project root: python verify_m1.py
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -22,7 +22,7 @@ print("\n=== Milestone 1 Verification: Database Foundation ===\n")
 
 # 1. core.config
 try:
-    from src.core.config import get_settings, AppSettings, DatabaseSettings
+    from src.core.config import AppSettings, DatabaseSettings, get_settings
     s = get_settings()
     assert isinstance(s, AppSettings)
     assert isinstance(s.db, DatabaseSettings)
@@ -34,8 +34,9 @@ except Exception as e:
 
 # 2. db.base_model
 try:
-    from src.api.db.base_model import Base, UUIDMixin, TimestampMixin, AuditMixin
     from sqlalchemy.orm import DeclarativeBase
+
+    from src.api.db.base_model import AuditMixin, Base
     assert issubclass(Base, DeclarativeBase)
     ok("db.base_model — Base, UUIDMixin, TimestampMixin, AuditMixin all importable")
 except Exception as e:
@@ -43,8 +44,9 @@ except Exception as e:
 
 # 3. db.base (engine)
 try:
-    from src.api.db.base import engine, AsyncSessionLocal, dispose_engine
     from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
+
+    from src.api.db.base import AsyncSessionLocal, engine
     assert isinstance(engine, AsyncEngine)
     assert isinstance(AsyncSessionLocal, async_sessionmaker)
     import asyncio
@@ -55,8 +57,9 @@ except Exception as e:
 
 # 4. db.session
 try:
-    from src.api.db.session import get_async_session
     import inspect
+
+    from src.api.db.session import get_async_session
     assert inspect.isasyncgenfunction(get_async_session)
     ok("db.session — get_async_session is an async generator function")
 except Exception as e:
@@ -65,8 +68,11 @@ except Exception as e:
 # 5. db __init__ public interface
 try:
     from src.api.db import (
-        engine, AsyncSessionLocal, dispose_engine,
-        Base, UUIDMixin, TimestampMixin, AuditMixin, get_async_session,
+        AsyncSessionLocal,
+        AuditMixin,
+        Base,
+        engine,
+        get_async_session,
     )
     ok("db __init__ — all 8 public symbols importable from src.api.db")
 except Exception as e:
@@ -74,10 +80,10 @@ except Exception as e:
 
 # 6. AuditMixin can be used in a concrete model
 try:
-    import uuid
     from sqlalchemy import String
-    from sqlalchemy.orm import mapped_column, Mapped
-    from src.api.db.base_model import Base, AuditMixin
+    from sqlalchemy.orm import Mapped, mapped_column
+
+    from src.api.db.base_model import AuditMixin, Base
 
     class _TestModel(Base, AuditMixin):
         __tablename__ = "_test_model_verify"
@@ -95,6 +101,7 @@ except Exception as e:
 # 7. main.py imports cleanly (routers that exist)
 try:
     import importlib
+
     # Only check the import chain, not start uvicorn
     import src.api.main as _main_mod
     assert hasattr(_main_mod, "create_app")

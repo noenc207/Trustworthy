@@ -7,14 +7,14 @@ from __future__ import annotations
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.db.session import get_async_session
-from src.api.db.repositories.user import UserRepository
-from src.api.db.repositories.upload import UploadRepository
 from src.api.db.repositories.prediction import PredictionRepository
-from src.api.services.auth import AuthService
-from src.api.services.upload import UploadService
-from src.api.services.prediction import PredictionService
+from src.api.db.repositories.upload import UploadRepository
+from src.api.db.repositories.user import UserRepository
+from src.api.db.session import get_async_session
 from src.api.dependencies.engine import get_inference_engine
+from src.api.services.auth import AuthService
+from src.api.services.prediction import PredictionService
+from src.api.services.upload import UploadService
 from src.modules.inference_engine.engine import TrustworthyInferenceEngine
 
 

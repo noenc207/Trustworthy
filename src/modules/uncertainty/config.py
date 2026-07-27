@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+
 
 class UncertaintyConfig(BaseModel):
     algorithm: str = "entropy"

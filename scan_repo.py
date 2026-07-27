@@ -20,7 +20,7 @@ for root, dirs, files in os.walk('src'):
             continue
         filepath = os.path.join(root, f)
         try:
-            with open(filepath, 'r', encoding='utf-8') as fh:
+            with open(filepath, encoding='utf-8') as fh:
                 lines = fh.readlines()
                 for i, line in enumerate(lines):
                     for pat, kind in patterns:

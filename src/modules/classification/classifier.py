@@ -11,11 +11,10 @@ Key features:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
+import timm
 import torch
 import torch.nn as nn
-import timm
 
 
 @dataclass
@@ -61,7 +60,7 @@ class SkinLesionClassifier(nn.Module):
 
         # Custom classifier head
         self.head = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1) if self._needs_pooling() else nn.Identity(),
+            nn.Identity(),
             nn.Flatten(),
             nn.BatchNorm1d(feature_dim),
             nn.Dropout(p=drop_rate),

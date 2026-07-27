@@ -2,8 +2,9 @@
 Verification script for Phase 5 — AI Core Architecture.
 Run from project root: python verify_p5.py
 """
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.dirname(__file__))
 
 errors = []
@@ -22,19 +23,9 @@ print("\n=== Phase 5 Verification: AI Core Architecture ===\n")
 # ── 1. Protocol Interfaces ────────────────────────────────────────────────────
 try:
     from src.modules.inference_engine.protocols import (
-        ImageQualityAssessorProtocol,
-        ClassifierProtocol,
-        OODDetectorProtocol,
-        UncertaintyEstimatorProtocol,
-        CalibratorProtocol,
-        ExplainerProtocol,
-        RecommendationEngineProtocol,
-        PreprocessorProtocol,
-        QualityReport,
         ClassificationResult,
-        OODResult,
-        UncertaintyResult,
         ClinicalRecommendation,
+        QualityReport,
     )
     ok("protocols — All Protocol interfaces importable")
 except Exception as e:
@@ -43,7 +34,8 @@ except Exception as e:
 # ── 2. Pipeline Context ────────────────────────────────────────────────────────
 try:
     import numpy as np
-    from src.modules.inference_engine.context import PipelineContext, PipelineConfig
+
+    from src.modules.inference_engine.context import PipelineConfig, PipelineContext
 
     ctx = PipelineContext(
         raw_image=np.zeros((224, 224, 3), dtype=np.uint8),
@@ -61,15 +53,14 @@ except Exception as e:
 # ── 3. Pipeline Stages — import only (models not needed to test structure) ─────
 try:
     from src.modules.inference_engine.stages import (
-        PipelineStage,
-        QualityAssessmentStage,
-        PreprocessingStage,
-        ClassificationStage,
-        OODDetectionStage,
-        UncertaintyEstimationStage,
         CalibrationStage,
-        ExplainabilityStage,
+        ClassificationStage,
         ClinicalRecommendationStage,
+        ExplainabilityStage,
+        OODDetectionStage,
+        PreprocessingStage,
+        QualityAssessmentStage,
+        UncertaintyEstimationStage,
     )
     # Verify each stage has a name and is_critical attribute
     stage_classes = [
@@ -122,7 +113,8 @@ except Exception as e:
 try:
     import shutil
     from pathlib import Path
-    from src.modules.model_registry.registry import ModelRegistry, ModelMetadata
+
+    from src.modules.model_registry.registry import ModelRegistry
 
     test_registry_dir = Path("data/test_model_registry")
     test_registry_dir.mkdir(parents=True, exist_ok=True)
@@ -139,11 +131,11 @@ except Exception as e:
 
 # ── 6. Clinical Recommendation Engine (syntax fix verification) ────────────────
 try:
-    from src.modules.clinical_recommendation.engine import (
-        ClinicalRecommendationEngine,
-        ClinicalRecommendation,
-    )
     from src.core.constants import LesionClass
+    from src.modules.clinical_recommendation.engine import (
+        ClinicalRecommendation,
+        ClinicalRecommendationEngine,
+    )
 
     engine = ClinicalRecommendationEngine()
     rec = engine.generate(
@@ -163,16 +155,19 @@ except Exception as e:
 try:
     import numpy as np
     import torch
-    from src.modules.inference_engine.executor import PipelineExecutor, PredictionResult
-    from src.modules.inference_engine.context import PipelineConfig, PipelineContext
-    from src.modules.inference_engine.stages import (
-        QualityAssessmentStage,
-        ClinicalRecommendationStage,
-    )
-    from src.modules.inference_engine.protocols import (
-        QualityReport, ClassificationResult, ClinicalRecommendation
-    )
+
     from src.core.constants import LesionClass
+    from src.modules.inference_engine.context import PipelineConfig, PipelineContext
+    from src.modules.inference_engine.executor import PipelineExecutor, PredictionResult
+    from src.modules.inference_engine.protocols import (
+        ClassificationResult,
+        ClinicalRecommendation,
+        QualityReport,
+    )
+    from src.modules.inference_engine.stages import (
+        ClinicalRecommendationStage,
+        QualityAssessmentStage,
+    )
 
     # Mock modules that satisfy Protocols without ML dependencies
     class MockQualityAssessor:
@@ -198,7 +193,6 @@ try:
 
     class MockRecommendationEngine:
         def generate(self, predicted_class, confidence, uncertainty, is_ood, model_version="v1"):
-            from src.modules.inference_engine.protocols import ClinicalRecommendation
             return ClinicalRecommendation(
                 predicted_diagnosis="Test Melanoma",
                 urgency_level="critical",
@@ -207,9 +201,7 @@ try:
                 patient_summary="Test summary",
             )
 
-    from src.modules.inference_engine.stages import (
-        PreprocessingStage, ClassificationStage
-    )
+    from src.modules.inference_engine.stages import ClassificationStage, PreprocessingStage
 
     # Compose a minimal pipeline with mock modules
     stages = [

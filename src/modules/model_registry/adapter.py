@@ -2,9 +2,12 @@
 Backend Adapter Abstraction.
 """
 from __future__ import annotations
-from typing import Protocol, Any
+
 from pathlib import Path
+from typing import Any, Protocol
+
 from src.modules.inference_engine.device_manager import DeviceManager
+
 
 class BackendAdapter(Protocol):
     """
@@ -15,7 +18,7 @@ class BackendAdapter(Protocol):
     def load_model(self, path: Path, device: DeviceManager) -> Any:
         """Load model from path onto target device."""
         ...
-        
+
     def to_device(self, model: Any, device: DeviceManager) -> Any:
         """Move model to a specific device."""
         ...

@@ -33,7 +33,7 @@ def detect_corrupted_images(df: pd.DataFrame, num_workers: int = 4) -> list[str]
 
     paths = df['path'].tolist()
     corrupted = []
-    
+
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         results = executor.map(check_image, paths)
         corrupted = [p for p in results if p is not None]
@@ -57,15 +57,15 @@ def detect_patient_leakage(train_df: pd.DataFrame, val_df: pd.DataFrame, test_df
     if patient_column not in train_df.columns:
         logger.info("No patient column provided, skipping leakage check.")
         return False
-        
+
     train_patients = set(train_df[patient_column].unique())
     val_patients = set(val_df[patient_column].unique())
     test_patients = set(test_df[patient_column].unique())
-    
+
     leak_train_val = train_patients.intersection(val_patients)
     leak_train_test = train_patients.intersection(test_patients)
     leak_val_test = val_patients.intersection(test_patients)
-    
+
     has_leak = False
     if leak_train_val:
         logger.error(f"Leakage Train/Val! {len(leak_train_val)} patients leak.")
@@ -76,7 +76,7 @@ def detect_patient_leakage(train_df: pd.DataFrame, val_df: pd.DataFrame, test_df
     if leak_val_test:
         logger.error(f"Leakage Val/Test! {len(leak_val_test)} patients leak.")
         has_leak = True
-        
+
     return has_leak
 
 
@@ -87,7 +87,7 @@ def generate_dataset_report(df: pd.DataFrame, output_path: Path) -> None:
         "class_distribution": analyze_class_distribution(df),
         "duplicates": len(detect_duplicates(df)),
     }
-    
+
     with open(output_path, "w") as f:
         json.dump(report, f, indent=4)
     logger.info(f"Dataset report saved to {output_path}")

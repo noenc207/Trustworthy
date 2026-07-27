@@ -2,21 +2,21 @@
 Verification Script for Milestone 6.9 and beyond.
 This script validates the execution of Evaluation, Governance, and Reporting layers.
 """
-import sys
 import logging
-from pathlib import Path
+import sys
+
 from src.modules.evaluation.benchmark.benchmark_loader import BenchmarkLoader
 from src.modules.evaluation.calibration.expected_calibration_error import expected_calibration_error
-from src.modules.research.statistics.assumption_validator import AssumptionValidator
-from src.modules.research.governance.claim_consistency import ClaimConsistencyValidator
-from src.modules.reporting.publication_tables import create_metrics_table
 from src.modules.reporting.markdown_generator import dataframe_to_markdown
+from src.modules.reporting.publication_tables import create_metrics_table
+from src.modules.research.governance.claim_consistency import ClaimConsistencyValidator
+from src.modules.research.statistics.assumption_validator import AssumptionValidator
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 def verify_m69_layers():
     logging.info("Starting M6.9 Verification...")
-    
+
     # 1. Benchmark Loader Validation
     try:
         loader = BenchmarkLoader("ISIC")
@@ -24,7 +24,7 @@ def verify_m69_layers():
         logging.info("BenchmarkLoader initialized safely.")
     except Exception as e:
         logging.error(f"BenchmarkLoader failed: {e}")
-        
+
     try:
         import numpy as np
         y_true = np.array([0, 1, 1, 0])
@@ -33,14 +33,14 @@ def verify_m69_layers():
         logging.info(f"Calibration Engine (ECE) initialized and tested. ECE = {ece}")
     except Exception as e:
         logging.error(f"Calibration Engine failed: {e}")
-        
+
     # 3. Governance Statistics
     try:
         validator = AssumptionValidator()
         logging.info("AssumptionValidator (Governance) initialized.")
     except Exception as e:
         logging.error(f"AssumptionValidator failed: {e}")
-        
+
     # 4. Claim Consistency
     try:
         claim_val = ClaimConsistencyValidator()
@@ -48,7 +48,7 @@ def verify_m69_layers():
         logging.info(f"ClaimConsistencyValidator evaluated SOTA claim safely. Valid: {res}")
     except Exception as e:
         logging.error(f"ClaimConsistencyValidator failed: {e}")
-        
+
     # 5. Reporting
     try:
         metrics = {
@@ -61,7 +61,7 @@ def verify_m69_layers():
     except Exception as e:
         logging.error(f"Reporting Layer failed: {e}")
         sys.exit(1)
-        
+
     logging.info("M6.9+ Verification Completed Successfully.")
 
 if __name__ == "__main__":

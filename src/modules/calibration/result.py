@@ -1,7 +1,8 @@
-import os
 import json
+import os
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
+
 
 @dataclass(frozen=True)
 class CalibrationResult:
@@ -9,7 +10,7 @@ class CalibrationResult:
     optimizer: str
     iterations: int
     training_time: float
-    
+
     ece_before: float
     ece_after: float
     adaptive_ece_before: float
@@ -20,15 +21,15 @@ class CalibrationResult:
     brier_after: float
     nll_before: float
     nll_after: float
-    
+
     confidence_before: float
     confidence_after: float
-    
+
     improved: bool
     rollback: bool
     is_calibrated: bool
     execution_time: float
-    
+
     metrics: dict[str, Any] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -36,7 +37,7 @@ class CalibrationResult:
     def to_json(self, filepath: str) -> None:
         """Save a scientific report to JSON."""
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        
+
         report = {
             "optimizer": self.optimizer,
             "temperature": self.temperature,
@@ -64,6 +65,6 @@ class CalibrationResult:
             "dataset_statistics": self.metadata.get("dataset_statistics", {}),
             "warnings": self.warnings
         }
-        
+
         with open(filepath, "w") as f:
             json.dump(report, f, indent=4)

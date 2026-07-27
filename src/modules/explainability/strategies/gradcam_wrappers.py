@@ -1,8 +1,9 @@
 from typing import Any
+
 import numpy as np
-import torch
 
 from src.modules.explainability.strategies.base import BaseCAMStrategy
+
 
 class GradCAMBaseStrategy(BaseCAMStrategy):
     def __init__(self, config: Any | None = None) -> None:
@@ -15,8 +16,7 @@ class GradCAMBaseStrategy(BaseCAMStrategy):
             version = getattr(pytorch_grad_cam, "__version__", "unknown")
         except ImportError:
             version = "unknown"
-            
-        import torch
+
         device = str(next(self.model.parameters()).device) if self.model else "unknown"
         return {
             "backend": "pytorch-grad-cam",
@@ -34,7 +34,7 @@ class GradCAMBaseStrategy(BaseCAMStrategy):
                 if name == layer_name:
                     target_layer = module
                     break
-        
+
         if target_layer is None:
             # Fallback to last conv layer
             for module in reversed(list(model.modules())):
@@ -48,7 +48,7 @@ class GradCAMBaseStrategy(BaseCAMStrategy):
         self.model = model
         self.input_tensor = input_tensor
         self.target_class = target_class
-        
+
         target_layers = self._get_target_layer(model)
         self.cam_instance = self._init_cam(model, target_layers)
 
@@ -58,16 +58,16 @@ class GradCAMBaseStrategy(BaseCAMStrategy):
     def compute(self, activations: Any, gradients: Any) -> np.ndarray:
         if self.cam_instance is None:
             raise NotImplementedError("CAM instance not initialized.")
-        
+
         from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
         targets = [ClassifierOutputTarget(self.target_class)]
-        
+
         # Generates a grayscale cam
         grayscale_cam = self.cam_instance(input_tensor=self.input_tensor, targets=targets)
-        
+
         # Take the first image in the batch
         heatmap = grayscale_cam[0, :]
-        
+
         self.raw_heatmap = heatmap
         return heatmap
 

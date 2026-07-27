@@ -2,8 +2,10 @@
 Model Lifecycle Management.
 """
 from __future__ import annotations
+
 import threading
 from enum import Enum
+
 
 class ModelLifecycleState(str, Enum):
     REGISTERED = "registered"
@@ -19,7 +21,7 @@ class ModelLifecycleError(Exception):
 
 class ModelLifecycle:
     """Thread-safe finite state machine for model lifecycles."""
-    
+
     def __init__(self) -> None:
         self._state = ModelLifecycleState.REGISTERED
         self._lock = threading.RLock()

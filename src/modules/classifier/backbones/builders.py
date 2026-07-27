@@ -1,6 +1,8 @@
 import torch.nn as nn
 from torchvision import models
+
 from src.modules.classifier.registry import BackboneRegistry, ClassifierRegistry
+
 
 def build_resnet(name: str, pretrained: bool = True):
     weights = "DEFAULT" if pretrained else None
@@ -45,7 +47,7 @@ class LinearClassifier(nn.Module):
         super().__init__()
         self.drop = nn.Dropout(dropout)
         self.fc = nn.Linear(in_features, num_classes)
-        
+
     def forward(self, x):
         return self.fc(self.drop(x))
 

@@ -1,13 +1,14 @@
-import pytest
+
 import numpy as np
-from pathlib import Path
+import pytest
 import torch
 
 from src.modules.classifier.config import ClassifierConfig
 from src.modules.classifier.result import PredictionResult
 from src.modules.classifier.stage import LesionClassificationStage
-from src.modules.inference_engine.context import PipelineContext, PipelineConfig
+from src.modules.inference_engine.context import PipelineConfig, PipelineContext
 from src.modules.preprocessing.results import PreprocessingResult
+
 
 @pytest.fixture
 def dummy_weights(tmp_path):
@@ -18,7 +19,7 @@ def dummy_weights(tmp_path):
         def forward(self, x):
             x = x.reshape(x.size(0), -1)
             return self.fc(x)
-            
+
     model = DummyModel()
     scripted = torch.jit.script(model)
     path = tmp_path / "dummy.pt"
@@ -48,16 +49,16 @@ def test_successful_inference(base_context, dummy_weights):
         device="cpu",
         model_name="efficientnet_v2"
     )
-    
+
     stage = LesionClassificationStage(config)
     stage.initialize()
-    
+
     assert stage.validate(base_context)
     ctx = stage.execute(base_context)
-    
+
     assert "classification" in ctx.artifacts
     pred, session = ctx.artifacts["classification"]
-    
+
     assert isinstance(pred, PredictionResult)
     assert pred.predicted_class in config.class_names
     assert 0.0 <= pred.confidence <= 1.0
@@ -68,11 +69,11 @@ def test_successful_inference(base_context, dummy_weights):
 def test_missing_preprocessing():
     ctx = PipelineContext(raw_image=None, config=PipelineConfig())
     ctx.artifacts = {} # No preprocessing result
-    
+
     config = ClassifierConfig()
     stage = LesionClassificationStage(config)
     stage.initialize()
-    
+
     assert not stage.validate(ctx)
 
 def test_unsupported_backbone(base_context, dummy_weights):
@@ -81,7 +82,7 @@ def test_unsupported_backbone(base_context, dummy_weights):
         model_name="unsupported_model"
     )
     stage = LesionClassificationStage(config)
-    
+
     from src.modules.classifier.exceptions import UnsupportedBackboneError
     with pytest.raises(UnsupportedBackboneError):
         stage.initialize()

@@ -32,8 +32,8 @@ async def upload_image(
     """Process and store an uploaded image."""
     user_id = current_user["sub"]
     logger.info(f"Processing upload for user_id={user_id}, filename={file.filename}")
-    
+
     upload_record = await upload_service.process_upload(file=file, user_id=user_id)
-    
+
     logger.info(f"Successfully saved upload_id={upload_record.id}")
     return upload_record

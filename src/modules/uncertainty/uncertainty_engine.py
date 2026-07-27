@@ -1,12 +1,13 @@
 import time
-import numpy as np
-from typing import Dict, Any
 
-from .dto import UncertaintyResult
-from .predictive_entropy import PredictiveEntropy
-from .mutual_information import MutualInformation
-from .variation_ratio import VariationRatio
+import numpy as np
+
 from .confidence_interval import ConfidenceInterval
+from .dto import UncertaintyResult
+from .mutual_information import MutualInformation
+from .predictive_entropy import PredictiveEntropy
+from .variation_ratio import VariationRatio
+
 
 class UncertaintyEngine:
     def __init__(self):
@@ -19,7 +20,7 @@ class UncertaintyEngine:
 
     def estimate(self, probabilities: np.ndarray, method: str = "mc_dropout") -> UncertaintyResult:
         start_time = time.time()
-        
+
         if method == "deep_ensemble":
             # If only interface exists without actual checkpoints
             return UncertaintyResult(
@@ -52,19 +53,19 @@ class UncertaintyEngine:
             results = {}
             for name, estimator in self.estimators.items():
                 results.update(estimator.estimate(probabilities))
-                
+
             # Confidence is max mean prob
             if probabilities.ndim == 3:
                 conf = float(np.max(np.mean(probabilities, axis=0)))
             else:
                 conf = float(np.max(probabilities))
-                
+
             entropy_val = results.get("entropy", 0.0)
             mi_val = results.get("mutual_information", 0.0)
             vr_val = results.get("variation_ratio", 0.0)
-            
+
             uncertainty = (entropy_val + mi_val + vr_val) / 3.0
-            
+
             return UncertaintyResult(
                 uncertainty=uncertainty,
                 confidence=conf,

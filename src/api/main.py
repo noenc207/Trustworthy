@@ -11,8 +11,8 @@ Sets up:
 """
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -27,12 +27,12 @@ except ImportError:  # pragma: no cover
     _PROMETHEUS_AVAILABLE = False
 
 from src.api.db import dispose_engine
-from src.api.dependencies.redis import init_redis, close_redis
+from src.api.dependencies.redis import close_redis, init_redis
 from src.api.middleware.logging import RequestLoggingMiddleware
+from src.api.routers import auth, health, prediction, upload
 from src.core.config import get_settings
 from src.core.exceptions import SkinAIException
 from src.core.logging import setup_logging
-from src.api.routers import health, prediction, auth, upload
 
 settings = get_settings()
 setup_logging(settings)
@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # ── Startup ──────────────────────────────────────────────────────
     # The DB engine connection pool is created lazily on first query.
     logger.info("Database engine initialised (pool will connect on first use)")
-    
+
     # Initialize Redis connection pool
     await init_redis()
     logger.info("Redis connection pool initialized")
@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # ── Shutdown ─────────────────────────────────────────────────────
     logger.info("Closing Redis connection pool…")
     await close_redis()
-    
+
     logger.info("Draining database connection pool…")
     await dispose_engine()
     logger.info("Shutdown complete")
@@ -78,7 +78,7 @@ def create_app() -> FastAPI:
     # ── Middleware ─────────────────────────────────────────────────
     # Add Request Logging Middleware
     app.add_middleware(RequestLoggingMiddleware)
-    
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -118,7 +118,7 @@ def create_app() -> FastAPI:
             should_ignore_untemplated=True,
         ).instrument(app).expose(app, endpoint="/metrics")
     else:
-        logger.warning(  # noqa: G004
+        logger.warning(
             "prometheus_fastapi_instrumentator not installed — /metrics endpoint disabled"
         )
 

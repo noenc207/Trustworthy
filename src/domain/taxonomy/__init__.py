@@ -1,3 +1,3 @@
-from src.domain.taxonomy.registry import ClassRegistry, ClassMetadata
+from src.domain.taxonomy.registry import ClassMetadata, ClassRegistry
 
-__all__ = ["ClassRegistry", "ClassMetadata"]
+__all__ = ["ClassMetadata", "ClassRegistry"]

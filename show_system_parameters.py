@@ -1,11 +1,12 @@
 import json
-from pprint import pprint
+
 from src.core.config import get_config
 from src.modules.evaluation.calibration.expected_calibration_error import expected_calibration_error
-from src.modules.reporting.publication_tables import create_metrics_table
 from src.modules.reporting.markdown_generator import dataframe_to_markdown
+from src.modules.reporting.publication_tables import create_metrics_table
 from src.modules.research.governance.claim_consistency import ClaimConsistencyValidator
 from src.modules.research.statistics.test_selector import TestSelector
+
 
 def show_parameters():
     print("="*60)
@@ -15,7 +16,7 @@ def show_parameters():
     # Pydantic v2 model_dump
     config_dict = settings.model_dump()
     print(json.dumps(config_dict, indent=4, default=str))
-    
+
     print("\n" + "="*60)
     print("2. CHẠY THỬ NGHIỆM TÍNH TOÁN METRIC (EVALUATION LAYER)")
     print("="*60)
@@ -24,7 +25,7 @@ def show_parameters():
     y_prob = np.array([0.1, 0.9, 0.8, 0.2, 0.85, 0.3, 0.4, 0.7])
     ece = expected_calibration_error(y_true, y_prob, num_bins=3)
     print(f"[Calibration] Expected Calibration Error (ECE): {ece:.4f}")
-    
+
     print("\n" + "="*60)
     print("3. KIỂM ĐỊNH TỰ ĐỘNG VÀ QUẢN TRỊ KHOA HỌC (GOVERNANCE LAYER)")
     print("="*60)
@@ -34,7 +35,7 @@ def show_parameters():
     data2 = np.random.normal(0.5, 1, 100).tolist()
     test_type = selector.compare_two_groups(data1, data2, independent=False)
     print(f"[Test Selector] Khuyên dùng kiểm định: {test_type['test_name']} (p={test_type['p_value']:.4f})")
-    
+
     # Claim Validator
     claim_val = ClaimConsistencyValidator()
     claim1 = claim_val.validate_claim("This model is SOTA", evidence={"benchmark": "ISIC_2019"})
@@ -43,7 +44,7 @@ def show_parameters():
     print(f"[Claim Validation] Yêu cầu 'SOTA' + Benchmark ISIC: {claim1}")
     print(f"[Claim Validation] Yêu cầu 'Significant' + p=0.02: {claim2}")
     print(f"[Claim Validation] Yêu cầu 'Significant' + p=0.15: {claim3}")
-    
+
     print("\n" + "="*60)
     print("4. KẾT XUẤT BÁO CÁO (REPORTING LAYER)")
     print("="*60)

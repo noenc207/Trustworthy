@@ -12,20 +12,17 @@ Comprehensive model evaluation with:
 """
 from __future__ import annotations
 
-from pathlib import Path
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
+from loguru import logger
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
     roc_auc_score,
-    average_precision_score,
 )
-from loguru import logger
 
 
 @dataclass

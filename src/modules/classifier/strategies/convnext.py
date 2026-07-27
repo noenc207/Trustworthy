@@ -1,10 +1,12 @@
-import numpy as np
-from typing import Any, List
 from pathlib import Path
+from typing import Any
 
-from src.modules.classifier.strategies.base import AbstractClassifierStrategy
+import numpy as np
+
 from src.modules.classifier.interfaces import BackendAdapter
-from src.modules.classifier.result import ModelInfo, PredictionResult, PredictionCandidate
+from src.modules.classifier.result import ModelInfo, PredictionCandidate, PredictionResult
+from src.modules.classifier.strategies.base import AbstractClassifierStrategy
+
 
 class ConvNeXtStrategy(AbstractClassifierStrategy):
     # Stub implementation
@@ -24,7 +26,7 @@ class ConvNeXtStrategy(AbstractClassifierStrategy):
     def predict(self, tensor: Any, backend_adapter: BackendAdapter) -> Any:
         return backend_adapter.predict(self.model, tensor)
 
-    def predict_batch(self, tensors: List[Any], backend_adapter: BackendAdapter) -> List[PredictionResult]:
+    def predict_batch(self, tensors: list[Any], backend_adapter: BackendAdapter) -> list[PredictionResult]:
         import torch
         if isinstance(tensors, list):
             if isinstance(tensors[0], np.ndarray):
@@ -54,12 +56,12 @@ class ConvNeXtStrategy(AbstractClassifierStrategy):
         return results
 
     def postprocess_output(self, raw_output: Any) -> dict:
-        if hasattr(raw_output, "detach"): 
+        if hasattr(raw_output, "detach"):
             raw_output = raw_output.detach().cpu().numpy()
         logits = np.squeeze(raw_output)
         probs = self._normalize_logits(logits)
         predicted_idx = int(np.argmax(probs))
-        
+
         return {
             "predicted_class": self.class_names[predicted_idx],
             "predicted_index": predicted_idx,

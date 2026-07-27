@@ -1,6 +1,9 @@
-import numpy as np
 import pickle
+
+import numpy as np
+
 from .base import BaseCalibrator
+
 
 class HistogramBinning(BaseCalibrator):
     def __init__(self, bins=15):
@@ -15,11 +18,11 @@ class HistogramBinning(BaseCalibrator):
         max_logits = np.max(logits, axis=1, keepdims=True)
         exp_logits = np.exp(logits - max_logits)
         probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-        
+
         num_classes = probs.shape[1]
         self.bin_edges = np.linspace(0, 1, self.bins + 1)
         self.bin_values = np.zeros((num_classes, self.bins))
-        
+
         for c in range(num_classes):
             p_c = probs[:, c]
             y_c = (labels == c).astype(float)
@@ -38,12 +41,12 @@ class HistogramBinning(BaseCalibrator):
         max_logits = np.max(logits, axis=1, keepdims=True)
         exp_logits = np.exp(logits - max_logits)
         probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-        
+
         calibrated = np.zeros_like(probs)
         for c in range(probs.shape[1]):
             indices = np.digitize(probs[:, c], self.bin_edges[1:-1])
             calibrated[:, c] = self.bin_values[c, indices]
-            
+
         calibrated = np.clip(calibrated, 1e-15, 1.0)
         return calibrated / np.sum(calibrated, axis=1, keepdims=True)
 

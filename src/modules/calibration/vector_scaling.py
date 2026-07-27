@@ -1,7 +1,10 @@
+import pickle
+
 import numpy as np
 from scipy.optimize import minimize
-import pickle
+
 from .base import BaseCalibrator
+
 
 class VectorScaling(BaseCalibrator):
     def __init__(self):
@@ -13,7 +16,7 @@ class VectorScaling(BaseCalibrator):
         self.metadata["num_samples"] = len(logits)
         self.metadata["fit_dataset"] = "validation"
         num_classes = logits.shape[1]
-        
+
         def nll(params):
             w = params[:num_classes]
             b = params[num_classes:]
@@ -24,7 +27,7 @@ class VectorScaling(BaseCalibrator):
             eps = 1e-15
             probs = np.clip(probs, eps, 1 - eps)
             return -np.mean(np.log(probs[np.arange(len(labels)), labels]))
-            
+
         init_params = np.concatenate([np.ones(num_classes), np.zeros(num_classes)])
         res = minimize(nll, init_params)
         self.weights = res.x[:num_classes]

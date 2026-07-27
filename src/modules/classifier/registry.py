@@ -1,8 +1,10 @@
-from typing import Dict, Type, Any, Callable
+from collections.abc import Callable
+
 from .exceptions import ConfigurationError
 
+
 class BackboneRegistry:
-    _registry: Dict[str, Callable] = {}
+    _registry: dict[str, Callable] = {}
 
     @classmethod
     def register(cls, name: str, builder: Callable):
@@ -19,14 +21,14 @@ class BackboneRegistry:
         return list(cls._registry.keys())
 
 class ClassifierRegistry:
-    _registry: Dict[str, Type] = {}
+    _registry: dict[str, type] = {}
 
     @classmethod
-    def register(cls, name: str, cls_type: Type):
+    def register(cls, name: str, cls_type: type):
         cls._registry[name] = cls_type
 
     @classmethod
-    def get(cls, name: str) -> Type:
+    def get(cls, name: str) -> type:
         if name not in cls._registry:
             raise ConfigurationError(f"Classifier {name} not found in registry.", "CLASSIFIER_NOT_FOUND")
         return cls._registry[name]

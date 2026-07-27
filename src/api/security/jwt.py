@@ -78,7 +78,7 @@ def verify_token(token: str, expected_type: str = "access") -> TokenData:
             _settings.security.secret_key.get_secret_value(),
             algorithms=[_settings.security.jwt_algorithm],
         )
-        
+
         token_type: str = payload.get("type", "")
         if token_type != expected_type:
             raise AuthException(message=f"Invalid token type: expected {expected_type}")

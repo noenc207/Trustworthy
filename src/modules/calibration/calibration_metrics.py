@@ -1,14 +1,15 @@
 import numpy as np
 
+
 def compute_ece(probs: np.ndarray, labels: np.ndarray, n_bins: int = 15) -> float:
     bin_boundaries = np.linspace(0, 1, n_bins + 1)
     bin_lowers = bin_boundaries[:-1]
     bin_uppers = bin_boundaries[1:]
-    
+
     confidences = np.max(probs, axis=1)
     predictions = np.argmax(probs, axis=1)
     accuracies = predictions == labels
-    
+
     ece = 0.0
     for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
         in_bin = (confidences > bin_lower) & (confidences <= bin_upper)
@@ -24,7 +25,7 @@ def compute_mce(probs: np.ndarray, labels: np.ndarray, n_bins: int = 15) -> floa
     confidences = np.max(probs, axis=1)
     predictions = np.argmax(probs, axis=1)
     accuracies = predictions == labels
-    
+
     mce = 0.0
     for i in range(n_bins):
         in_bin = (confidences > bin_boundaries[i]) & (confidences <= bin_boundaries[i+1])

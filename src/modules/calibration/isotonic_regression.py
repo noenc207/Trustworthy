@@ -1,7 +1,10 @@
+import pickle
+
 import numpy as np
 from sklearn.isotonic import IsotonicRegression as SklearnIsotonic
-import pickle
+
 from .base import BaseCalibrator
+
 
 class IsotonicRegression(BaseCalibrator):
     def __init__(self):
@@ -14,7 +17,7 @@ class IsotonicRegression(BaseCalibrator):
         max_logits = np.max(logits, axis=1, keepdims=True)
         exp_logits = np.exp(logits - max_logits)
         probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-        
+
         num_classes = probs.shape[1]
         self.ir_models = []
         for c in range(num_classes):
@@ -29,11 +32,11 @@ class IsotonicRegression(BaseCalibrator):
         max_logits = np.max(logits, axis=1, keepdims=True)
         exp_logits = np.exp(logits - max_logits)
         probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-        
+
         calibrated = np.zeros_like(probs)
         for c in range(probs.shape[1]):
             calibrated[:, c] = self.ir_models[c].predict(probs[:, c])
-            
+
         calibrated = np.clip(calibrated, 1e-15, 1.0)
         return calibrated / np.sum(calibrated, axis=1, keepdims=True)
 

@@ -38,20 +38,28 @@ class ExplainabilityEngine:
         self.reporter = ClinicalReportGenerator()
 
     def _get_strategy(self, algo: XAIAlgorithm):
-        from src.modules.explainability.strategies.gradcam import GradCAMStrategy
-        from src.modules.explainability.strategies.gradcampp import GradCAMPPStrategy
-        from src.modules.explainability.strategies.scorecam import ScoreCAMStrategy
-        from src.modules.explainability.strategies.hirescam import HiResCAMStrategy
-        
         # New Batch 5 Strategies
         from src.modules.explainability.strategies.captum_wrappers import (
-            GuidedBackpropStrategy, GuidedGradCAMStrategy, IntegratedGradientsStrategy,
-            DeepLIFTStrategy, InputXGradientStrategy, OcclusionStrategy, FeatureAblationStrategy
+            DeepLIFTStrategy,
+            FeatureAblationStrategy,
+            GuidedBackpropStrategy,
+            GuidedGradCAMStrategy,
+            InputXGradientStrategy,
+            IntegratedGradientsStrategy,
+            OcclusionStrategy,
         )
+        from src.modules.explainability.strategies.gradcam import GradCAMStrategy
         from src.modules.explainability.strategies.gradcam_wrappers import (
-            LayerCAMStrategy, XGradCAMStrategy, EigenCAMStrategy, EigenGradCAMStrategy,
-            AblationCAMStrategy, FullGradStrategy
+            AblationCAMStrategy,
+            EigenCAMStrategy,
+            EigenGradCAMStrategy,
+            FullGradStrategy,
+            LayerCAMStrategy,
+            XGradCAMStrategy,
         )
+        from src.modules.explainability.strategies.gradcampp import GradCAMPPStrategy
+        from src.modules.explainability.strategies.hirescam import HiResCAMStrategy
+        from src.modules.explainability.strategies.scorecam import ScoreCAMStrategy
 
         registry = {
             XAIAlgorithm.GRADCAM: GradCAMStrategy,
@@ -75,7 +83,7 @@ class ExplainabilityEngine:
 
         if algo in registry:
             return registry[algo](self.config)
-        
+
         # Fallback
         from src.modules.explainability.strategies.base import BaseCAMStrategy
         class FallbackStrategy(BaseCAMStrategy):

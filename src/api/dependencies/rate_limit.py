@@ -35,20 +35,20 @@ class RateLimiter:
         Uses a simple Redis string with TTL for the current minute window.
         """
         user_id = current_user["sub"]
-        
+
         # Simple fixed-window rate limiting
         # Key rotates every minute
         import time
         current_minute = int(time.time() / 60)
         key = f"rate_limit:{user_id}:{current_minute}"
-        
+
         # Increment counter
         count = await redis.incr(key)
-        
+
         if count == 1:
             # First request in this minute, set TTL
             await redis.expire(key, 60)
-            
+
         if count > self.max_requests:
             raise RateLimitError(
                 message=f"Rate limit exceeded. Maximum {self.max_requests} requests per minute."

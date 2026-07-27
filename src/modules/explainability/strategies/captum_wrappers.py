@@ -1,7 +1,9 @@
 from typing import Any
+
 import numpy as np
 
 from src.modules.explainability.strategies.base import BaseCAMStrategy
+
 
 class CaptumBaseStrategy(BaseCAMStrategy):
     def __init__(self, config: Any | None = None) -> None:
@@ -10,7 +12,6 @@ class CaptumBaseStrategy(BaseCAMStrategy):
 
     def get_metadata(self) -> dict[str, Any]:
         import captum
-        import torch
         device = str(next(self.model.parameters()).device) if self.model else "unknown"
         return {
             "backend": "captum",
@@ -25,22 +26,22 @@ class CaptumBaseStrategy(BaseCAMStrategy):
         self.input_tensor = input_tensor
         self.target_class = target_class
         # Do not run standard backward_pass as Captum handles it
-        # Just store references. 
+        # Just store references.
 
     def compute(self, activations: Any, gradients: Any) -> np.ndarray:
         if self.captum_method is None:
             raise NotImplementedError("Captum method not initialized.")
-        
+
         # Captum's attribute method
         import torch
         attr = self.captum_method.attribute(self.input_tensor, target=self.target_class)
-        
+
         # Aggregate across channels (C)
         if isinstance(attr, torch.Tensor):
             attr_np = attr.detach().cpu().numpy()
         else:
             attr_np = np.array(attr)
-            
+
         if len(attr_np.shape) == 4:
             # (B, C, H, W) -> (H, W)
             heatmap = np.sum(attr_np, axis=1)
@@ -48,7 +49,7 @@ class CaptumBaseStrategy(BaseCAMStrategy):
                 heatmap = heatmap[0]
         else:
             heatmap = attr_np
-            
+
         self.raw_heatmap = heatmap
         return heatmap
 
@@ -63,7 +64,7 @@ class GuidedGradCAMStrategy(CaptumBaseStrategy):
     def collect(self, model: Any, input_tensor: Any, target_class: int, hook_manager: Any) -> None:
         super().collect(model, input_tensor, target_class, hook_manager)
         from captum.attr import GuidedGradCam
-        
+
         # Find target layer
         layer_name = self.config.target_layer if self.config else None
         target_layer = None
@@ -72,7 +73,7 @@ class GuidedGradCAMStrategy(CaptumBaseStrategy):
                 if name == layer_name:
                     target_layer = module
                     break
-        
+
         if target_layer is None:
             # Fallback to last conv layer
             for module in reversed(list(model.modules())):
@@ -80,7 +81,7 @@ class GuidedGradCAMStrategy(CaptumBaseStrategy):
                 if isinstance(module, nn.Conv2d):
                     target_layer = module
                     break
-                    
+
         self.captum_method = GuidedGradCam(model, target_layer)
 
 class IntegratedGradientsStrategy(CaptumBaseStrategy):
@@ -106,12 +107,12 @@ class OcclusionStrategy(CaptumBaseStrategy):
         super().collect(model, input_tensor, target_class, hook_manager)
         from captum.attr import Occlusion
         self.captum_method = Occlusion(model)
-        
+
     def compute(self, activations: Any, gradients: Any) -> np.ndarray:
         # Occlusion requires sliding window
         attr = self.captum_method.attribute(
-            self.input_tensor, 
-            target=self.target_class, 
+            self.input_tensor,
+            target=self.target_class,
             sliding_window_shapes=(3, 15, 15) # Default window size
         )
         import torch
@@ -119,7 +120,7 @@ class OcclusionStrategy(CaptumBaseStrategy):
             attr_np = attr.detach().cpu().numpy()
         else:
             attr_np = np.array(attr)
-            
+
         heatmap = np.sum(attr_np, axis=1)
         if heatmap.shape[0] == 1:
             heatmap = heatmap[0]

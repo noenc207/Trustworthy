@@ -1,11 +1,12 @@
 """Checkpoint manager for training engine."""
 
-import os
 import glob
-import torch
-from pathlib import Path
+import os
 from dataclasses import dataclass
-from typing import Optional, Dict, Any
+from pathlib import Path
+
+import torch
+
 
 @dataclass
 class TrainingCheckpoint:
@@ -13,9 +14,9 @@ class TrainingCheckpoint:
     global_step: int
     model_state_dict: dict
     optimizer_state_dict: dict
-    scheduler_state_dict: Optional[dict]
-    scaler_state_dict: Optional[dict]
-    ema_state_dict: Optional[dict]
+    scheduler_state_dict: dict | None
+    scaler_state_dict: dict | None
+    ema_state_dict: dict | None
     best_metric: float
     config: dict
     seed: int
@@ -27,12 +28,12 @@ class CheckpointManager:
         self.save_top_k = save_top_k
         self.monitor = monitor
         self.mode = mode
-        
-        self.best_k_models: Dict[str, float] = {}
+
+        self.best_k_models: dict[str, float] = {}
 
     def save(self, checkpoint: TrainingCheckpoint, metric_value: float) -> Path:
         filepath = self.checkpoint_dir / f"checkpoint_epoch_{checkpoint.epoch}_step_{checkpoint.global_step}.pt"
-        
+
         torch.save({
             'epoch': checkpoint.epoch,
             'global_step': checkpoint.global_step,
@@ -45,7 +46,7 @@ class CheckpointManager:
             'config': checkpoint.config,
             'seed': checkpoint.seed
         }, filepath)
-        
+
         self.best_k_models[str(filepath)] = metric_value
         self.cleanup_old()
         return filepath
@@ -53,12 +54,12 @@ class CheckpointManager:
     def load_best(self) -> TrainingCheckpoint:
         if not self.best_k_models:
             raise FileNotFoundError("No checkpoints found.")
-        
+
         if self.mode == 'max':
             best_path = max(self.best_k_models.items(), key=lambda x: x[1])[0]
         else:
             best_path = min(self.best_k_models.items(), key=lambda x: x[1])[0]
-            
+
         return self._load_path(Path(best_path))
 
     def load_latest(self) -> TrainingCheckpoint:
@@ -67,7 +68,7 @@ class CheckpointManager:
             raise FileNotFoundError("No checkpoints found in directory.")
         latest_path = max(checkpoints, key=os.path.getctime)
         return self._load_path(Path(latest_path))
-        
+
     def _load_path(self, path: Path) -> TrainingCheckpoint:
         ckpt_data = torch.load(path, map_location='cpu')
         return TrainingCheckpoint(
@@ -92,7 +93,7 @@ class CheckpointManager:
                 worst_path = min(self.best_k_models.items(), key=lambda x: x[1])[0]
             else:
                 worst_path = max(self.best_k_models.items(), key=lambda x: x[1])[0]
-            
+
             del self.best_k_models[worst_path]
             try:
                 os.remove(worst_path)

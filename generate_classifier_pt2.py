@@ -1,4 +1,3 @@
-import os
 
 # 7. checkpoint.py
 with open('src/modules/classifier/checkpoint.py', 'w') as f:

@@ -21,7 +21,6 @@ class TestOODDetector:
     def test_msp_detect_returns_result(self, simple_model):
         """MSP detection should return an OODResult."""
         from src.modules.ood_detection.detector import OODDetector, OODMethod, OODResult
-        import torch
 
         class FlatModel(nn.Module):
             def __init__(self, inner): super().__init__(); self.inner = inner
@@ -38,7 +37,6 @@ class TestOODDetector:
     def test_ood_score_range(self, simple_model):
         """OOD score must be in [0, 1]."""
         from src.modules.ood_detection.detector import OODDetector, OODMethod
-        import torch
 
         class FlatModel(nn.Module):
             def __init__(self, inner): super().__init__(); self.inner = inner

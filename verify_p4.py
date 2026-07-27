@@ -2,9 +2,9 @@
 Verification script for Phase 4 — Data Processing Pipeline.
 Run from project root: python verify_p4.py
 """
-import sys
 import os
 import shutil
+import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -23,10 +23,11 @@ def fail(msg, err):
 print("\n=== Phase 4 Verification: Data Processing Pipeline ===\n")
 
 try:
+    import albumentations as A
     import cv2
     import numpy as np
     import torch
-    import albumentations as A
+
     from src.modules.preprocessing.config import TransformStageConfig
     from src.modules.preprocessing.factory import PreprocessingFactory
     from src.modules.preprocessing.visualization import PreprocessingVisualizer
@@ -34,18 +35,18 @@ try:
     # 1. Generate a noisy mock image with a "fake hair"
     test_dir = Path("data/test_preprocessing")
     test_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Base pinkish skin color
     img = np.full((300, 300, 3), (180, 130, 200), dtype=np.uint8)
-    
+
     # Add random noise
     noise = np.random.randint(-20, 20, (300, 300, 3), dtype=np.int16)
     img = np.clip(img.astype(np.int16) + noise, 0, 255).astype(np.uint8)
-    
+
     # Draw a "fake hair" (dark curved line)
     cv2.line(img, (50, 50), (250, 250), (30, 20, 30), thickness=4)
     cv2.line(img, (50, 250), (250, 50), (30, 20, 30), thickness=4)
-    
+
     orig_path = test_dir / "mock_original.jpg"
     cv2.imwrite(str(orig_path), cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
     ok("Setup — Mock noisy image with fake hair generated")
@@ -62,7 +63,7 @@ try:
 
     # 3. Build the pipeline
     pipeline = PreprocessingFactory.build(pipeline_config)
-    
+
     assert isinstance(pipeline, A.Compose)
     # Check that transforms were loaded (DullRazor, ColorConstancy, Resize, CLAHE, Normalize, ToTensorV2)
     assert len(pipeline.transforms) == 6
@@ -76,13 +77,13 @@ try:
         output_path=out_path,
         denormalize=True
     )
-    
+
     assert out_path.exists()
-    
+
     # 5. Verify the tensor output directly
     augmented = pipeline(image=img)
     tensor_img = augmented["image"]
-    
+
     assert isinstance(tensor_img, torch.Tensor)
     assert tensor_img.shape == (3, 224, 224)
     ok("preprocessing.transforms — Custom transforms executed successfully")

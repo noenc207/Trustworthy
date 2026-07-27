@@ -1,7 +1,8 @@
 import re
 
+
 def replace_in_file(filepath, pattern, replacement):
-    with open(filepath, 'r') as f:
+    with open(filepath) as f:
         content = f.read()
     content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
     with open(filepath, 'w') as f:

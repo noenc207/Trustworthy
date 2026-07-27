@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+
 import numpy as np
+
 
 class BaseCalibrator(ABC):
     def __init__(self):

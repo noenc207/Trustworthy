@@ -1,4 +1,3 @@
-import os
 import json
 
 # 1. repository_audit_final.md

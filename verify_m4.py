@@ -2,8 +2,8 @@
 Verification script for Milestone 4 — Repository Layer.
 Run from project root: python verify_m4.py
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -22,8 +22,9 @@ print("\n=== Milestone 4 Verification: Repository Layer ===\n")
 
 # 1. BaseRepository generics and methods
 try:
-    from src.api.db.repositories.base import BaseRepository
     import inspect
+
+    from src.api.db.repositories.base import BaseRepository
     methods = [m[0] for m in inspect.getmembers(BaseRepository, predicate=inspect.iscoroutinefunction)]
     assert "get" in methods
     assert "get_multi" in methods
@@ -36,10 +37,11 @@ except Exception as e:
 
 # 2. UserRepository
 try:
-    from src.api.db.repositories import UserRepository
-    from src.api.db.models.user import User
     from unittest.mock import Mock
-    
+
+    from src.api.db.models.user import User
+    from src.api.db.repositories import UserRepository
+
     mock_session = Mock()
     repo = UserRepository(session=mock_session)
     assert repo.model == User
@@ -51,10 +53,11 @@ except Exception as e:
 
 # 3. UploadRepository
 try:
-    from src.api.db.repositories import UploadRepository
-    from src.api.db.models.upload import Upload
     from unittest.mock import Mock
-    
+
+    from src.api.db.models.upload import Upload
+    from src.api.db.repositories import UploadRepository
+
     mock_session = Mock()
     repo = UploadRepository(session=mock_session)
     assert repo.model == Upload
@@ -65,10 +68,11 @@ except Exception as e:
 
 # 4. PredictionRepository
 try:
-    from src.api.db.repositories import PredictionRepository
-    from src.api.db.models.prediction import Prediction
     from unittest.mock import Mock
-    
+
+    from src.api.db.models.prediction import Prediction
+    from src.api.db.repositories import PredictionRepository
+
     mock_session = Mock()
     repo = PredictionRepository(session=mock_session)
     assert repo.model == Prediction

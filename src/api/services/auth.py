@@ -10,7 +10,7 @@ from src.api.schemas.auth import Token, UserCreate
 from src.api.security.jwt import create_access_token, create_refresh_token
 from src.api.security.password import verify_password
 from src.core.config import get_settings
-from src.core.exceptions import AuthException, ValidationError
+from src.core.exceptions import ValidationError
 
 _settings = get_settings()
 
@@ -40,7 +40,7 @@ class AuthService:
         """
         if await self.user_repo.get_by_email(user_in.email):
             raise ValidationError(message="Email already registered")
-        
+
         if await self.user_repo.get_by_username(user_in.username):
             raise ValidationError(message="Username already taken")
 
@@ -57,7 +57,7 @@ class AuthService:
             scopes=["admin"] if user.is_admin else ["user"],
         )
         refresh_token = create_refresh_token(subject=user.id)
-        
+
         return Token(
             access_token=access_token,
             refresh_token=refresh_token,

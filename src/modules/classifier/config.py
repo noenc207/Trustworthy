@@ -1,5 +1,6 @@
+
 from pydantic import BaseModel, Field
-from typing import Optional
+
 
 class ClassifierConfig(BaseModel):
     model_name: str = "efficientnet_v2"

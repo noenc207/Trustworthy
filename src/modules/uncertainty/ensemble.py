@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def run_ensemble(models, x):
     import torch
     outputs = []

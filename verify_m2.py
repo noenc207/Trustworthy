@@ -2,8 +2,8 @@
 Verification script for Milestone 2 — ORM Models.
 Run from project root: python verify_m2.py
 """
-import sys
 import os
+import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -22,7 +22,7 @@ print("\n=== Milestone 2 Verification: ORM Models ===\n")
 
 # 1. Models load without error
 try:
-    from src.api.db.models import User, Upload, Prediction
+    from src.api.db.models import Prediction, Upload, User
     ok("models package — User, Upload, Prediction imported successfully")
 except Exception as e:
     fail("models package", e)
@@ -51,7 +51,7 @@ try:
     mapper = class_mapper(Prediction)
     assert "user" in mapper.relationships, "Prediction missing 'user' relationship"
     assert "upload" in mapper.relationships, "Prediction missing 'upload' relationship"
-    
+
     # Check JSONB
     col = Prediction.__table__.columns["full_result"]
     assert type(col.type).__name__ == "JSONB", f"Expected JSONB, got {type(col.type).__name__}"

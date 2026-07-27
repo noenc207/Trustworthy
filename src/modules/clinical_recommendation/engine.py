@@ -20,7 +20,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from src.core.constants import LesionClass, UrgencyLevel, LESION_CLASS_NAMES, LESION_URGENCY
+from src.core.constants import LESION_CLASS_NAMES, LESION_URGENCY, LesionClass
 
 
 @dataclass

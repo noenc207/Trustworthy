@@ -4,11 +4,16 @@ Supports class balancing, patient-aware splits, and cross-validation.
 """
 from __future__ import annotations
 
-from typing import Iterator
+from collections.abc import Iterator
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import GroupKFold, GroupShuffleSplit, StratifiedKFold, StratifiedShuffleSplit
+from sklearn.model_selection import (
+    GroupKFold,
+    GroupShuffleSplit,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+)
 from torch.utils.data import WeightedRandomSampler
 from torch.utils.data.sampler import Sampler
 
@@ -33,7 +38,7 @@ class BalancedBatchSampler(Sampler):
         self.batch_size = batch_size
         self.classes = np.unique(self.labels)
         self.class_indices = {c: np.where(self.labels == c)[0] for c in self.classes}
-        
+
         # Calculate how many samples from each class per batch
         self.samples_per_class = max(1, self.batch_size // len(self.classes))
         self.num_batches = len(self.labels) // self.batch_size
@@ -44,7 +49,7 @@ class BalancedBatchSampler(Sampler):
         indices = {c: self.class_indices[c].copy() for c in self.classes}
         for c in self.classes:
             np.random.shuffle(indices[c])
-            
+
         for _ in range(self.num_batches):
             batch = []
             for c in self.classes:
@@ -52,11 +57,11 @@ class BalancedBatchSampler(Sampler):
                 if len(indices[c]) < self.samples_per_class:
                     indices[c] = self.class_indices[c].copy()
                     np.random.shuffle(indices[c])
-                
+
                 # Take samples_per_class elements
                 batch.extend(indices[c][:self.samples_per_class])
                 indices[c] = indices[c][self.samples_per_class:]
-                
+
             # If batch is slightly smaller than batch_size due to integer division, fill it randomly
             while len(batch) < self.batch_size:
                 c = np.random.choice(self.classes)
@@ -65,10 +70,10 @@ class BalancedBatchSampler(Sampler):
                     np.random.shuffle(indices[c])
                 batch.append(indices[c][0])
                 indices[c] = indices[c][1:]
-                
+
             np.random.shuffle(batch)
             batch_indices.extend(batch)
-            
+
         return iter(batch_indices)
 
     def __len__(self) -> int:
@@ -98,11 +103,11 @@ class PatientAwareSampler(Sampler):
 
 
 def create_stratified_split(
-    df: pd.DataFrame, 
-    train_ratio: float, 
-    val_ratio: float, 
-    test_ratio: float, 
-    seed: int, 
+    df: pd.DataFrame,
+    train_ratio: float,
+    val_ratio: float,
+    test_ratio: float,
+    seed: int,
     patient_column: str | None = None
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -110,18 +115,18 @@ def create_stratified_split(
     Returns indices for train, val, test.
     """
     assert abs((train_ratio + val_ratio + test_ratio) - 1.0) < 1e-5, "Ratios must sum to 1.0"
-    
+
     if patient_column and patient_column in df.columns:
         # Step 1: Split Train vs (Val + Test) grouped by patient
         gss = GroupShuffleSplit(n_splits=1, train_size=train_ratio, random_state=seed)
         train_idx, temp_idx = next(gss.split(df, groups=df[patient_column]))
-        
+
         # Step 2: Split Val vs Test grouped by patient
         temp_df = df.iloc[temp_idx].reset_index(drop=True)
         val_relative_ratio = val_ratio / (val_ratio + test_ratio)
         gss2 = GroupShuffleSplit(n_splits=1, train_size=val_relative_ratio, random_state=seed)
         val_temp_idx, test_temp_idx = next(gss2.split(temp_df, groups=temp_df[patient_column]))
-        
+
         val_idx = temp_idx[val_temp_idx]
         test_idx = temp_idx[test_temp_idx]
         return train_idx, val_idx, test_idx
@@ -130,21 +135,21 @@ def create_stratified_split(
         y = df['class_id'].values
         sss = StratifiedShuffleSplit(n_splits=1, train_size=train_ratio, random_state=seed)
         train_idx, temp_idx = next(sss.split(np.zeros(len(y)), y))
-        
+
         y_temp = y[temp_idx]
         val_relative_ratio = val_ratio / (val_ratio + test_ratio)
         sss2 = StratifiedShuffleSplit(n_splits=1, train_size=val_relative_ratio, random_state=seed)
         val_temp_idx, test_temp_idx = next(sss2.split(np.zeros(len(y_temp)), y_temp))
-        
+
         val_idx = temp_idx[val_temp_idx]
         test_idx = temp_idx[test_temp_idx]
         return train_idx, val_idx, test_idx
 
 
 def create_kfold_splits(
-    df: pd.DataFrame, 
-    n_splits: int, 
-    seed: int, 
+    df: pd.DataFrame,
+    n_splits: int,
+    seed: int,
     patient_column: str | None = None
 ) -> list[tuple[np.ndarray, np.ndarray]]:
     """
