@@ -302,4 +302,33 @@ with gr.Blocks(title="Trustworthy Medical AI - Phan loai Ung Thu Da") as demo:
                 outputs=[xai_img, out_gc, out_gcpp, out_lime, out_ig, out_occ]
             )
 
+        # ── Tab 3: Trợ lý Y khoa AI (Chatbot VLM) ──────────────────────
+        with gr.Tab("💬 Tro ly Y khoa AI (Generative VLM)"):
+            gr.Markdown("""
+            ### 🤖 Tro ly Y khoa Da phuong thuc (Qwen2-VL + LoRA)
+            Ban co the hoi bat cu dieu gi ve buc anh nay bang ngon ngu tu nhien. AI se "nhin" va tra loi ban.
+            *(Tinh nang nay dang duoc chuan bi cho buoi Huan luyen LoRA ngay mai)*
+            """)
+            
+            with gr.Row():
+                with gr.Column(scale=1):
+                    chat_img = gr.Image(label="📷 Tai anh ton thuong da", type="filepath")
+                with gr.Column(scale=2):
+                    chatbot = gr.Chatbot(height=400, label="Hoi dap Y khoa")
+                    msg = gr.Textbox(label="Dat cau hoi cho Bác sĩ AI", placeholder="Vi du: Dấu hiệu ác tính của nốt ruồi này là gì?")
+                    clear = gr.ClearButton([msg, chatbot])
+
+            def respond(message, chat_history, image_path):
+                # NOTE: Ngay mai sau khi train LoRA xong, se the code chay Qwen2-VL vao day!
+                # Hien tai dang de cau tra loi ao (Mock) de xem truoc Giao dien.
+                if not image_path:
+                    bot_message = "⚠️ Vui long tai mot buc anh len truoc khi hoi!"
+                else:
+                    bot_message = "👨‍⚕️ [TÍNH NĂNG ĐANG XÂY DỰNG]\n\nNgay mai sau khi ban chay file `train_vlm_lora.py` tren may 3090/5090 xong, AI se thuc su 'nhin' duoc anh va tra loi cau hoi nay: *" + message + "*"
+                
+                chat_history.append((message, bot_message))
+                return "", chat_history
+
+            msg.submit(respond, inputs=[msg, chatbot, chat_img], outputs=[msg, chatbot])
+
 demo.launch(server_name="0.0.0.0", server_port=7860, share=True)
