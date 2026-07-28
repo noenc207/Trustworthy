@@ -32,7 +32,7 @@ def get_train_transforms(image_size: int = 224) -> A.Compose:
     return A.Compose([
         # === PHASE 1: ANTI-WATERMARK - Zoom vào trung tâm, cắt bỏ viền ===
         A.RandomResizedCrop(
-            height=image_size, width=image_size,
+            size=(image_size, image_size),
             scale=(0.5, 0.85),  # Zoom mạnh hơn bản cũ (0.8-1.0) để cắt logo
             ratio=(0.9, 1.1),
         ),
@@ -79,8 +79,8 @@ def get_val_transforms(image_size: int = 224) -> A.Compose:
     """
     return A.Compose([
         # Resize lớn hơn rồi CenterCrop để cắt viền logo
-        A.Resize(height=int(image_size * 1.3), width=int(image_size * 1.3)),
-        A.CenterCrop(height=image_size, width=image_size),
+        A.Resize(size=(int(image_size * 1.3), int(image_size * 1.3))),
+        A.CenterCrop(size=(image_size, image_size)),
         A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),
         ToTensorV2(),
     ])
@@ -94,8 +94,8 @@ def get_inference_transforms(image_size: int = 224) -> A.Compose:
 def get_tta_transforms(image_size: int = 224) -> list[A.Compose]:
     """Return a list of augmentation variants for Test-Time Augmentation."""
     base_pre = [
-        A.Resize(height=int(image_size * 1.3), width=int(image_size * 1.3)),
-        A.CenterCrop(height=image_size, width=image_size),
+        A.Resize(size=(int(image_size * 1.3), int(image_size * 1.3))),
+        A.CenterCrop(size=(image_size, image_size)),
     ]
     base_post = [
         A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),

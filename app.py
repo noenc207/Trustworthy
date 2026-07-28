@@ -22,35 +22,39 @@ except ImportError:
 
 from src.core.constants import LesionClass, LESION_CLASS_NAMES, LESION_URGENCY
 from src.modules.classification.classifier import SkinLesionClassifier
-from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
+from xai_explainer import explain_all
 
 # =============================================
-# 1. LOAD MODEL
+# 1. LOAD MODEL (ENSEMBLE: EfficientNet-B4 + ResNet-50 + DenseNet-121)
 # =============================================
-print("🔄 Đang tải Model AI...")
-model = SkinLesionClassifier(backbone='efficientnet_b4', num_classes=7, pretrained=False)
+print("🔄 Đang tải Hội đồng Y khoa (3 Chuyên gia)...")
+import os
 
-import glob, os
-ckpt_files = glob.glob('checkpoints_finetuned/*.ckpt') + glob.glob('checkpoints_v2/*.ckpt') + glob.glob('checkpoints/*.ckpt')
-if not ckpt_files:
-    raise FileNotFoundError("Không tìm thấy file checkpoint nào!")
-# Lấy file checkpoint mới nhất
-ckpt_path = max(ckpt_files, key=os.path.getmtime)
-print(f"📦 Sử dụng checkpoint: {ckpt_path}")
+model1 = SkinLesionClassifier(backbone='efficientnet_b4', num_classes=7, pretrained=False)
+model2 = SkinLesionClassifier(backbone='resnet50', num_classes=7, pretrained=False)
+model3 = SkinLesionClassifier(backbone='densenet121', num_classes=7, pretrained=False)
 
-ckpt = torch.load(ckpt_path, map_location='cpu', weights_only=False)
-state_dict = {k.replace('model.', ''): v for k, v in ckpt['state_dict'].items() if k.startswith('model.')}
-model.load_state_dict(state_dict, strict=False)
-model.eval()
-print("✅ Model đã sẵn sàng!")
+def load_ckpt(model, path):
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"Không tìm thấy {path}")
+    ckpt = torch.load(path, map_location='cpu', weights_only=False)
+    state_dict = {k.replace('model.', ''): v for k, v in ckpt['state_dict'].items() if k.startswith('model.')}
+    model.load_state_dict(state_dict, strict=False)
+    model.eval()
+    return model
 
-# === Setup Grad-CAM ===
+model1 = load_ckpt(model1, "checkpoints/best_model.ckpt")
+model2 = load_ckpt(model2, "checkpoints/resnet50.ckpt")
+model3 = load_ckpt(model3, "checkpoints/densenet121.ckpt")
+print("✅ Hội đồng Y khoa 3 thành viên đã sẵn sàng!")
+
+# === Setup Grad-CAM (Using Model 1 for visualization) ===
 try:
-    target_layer = model.backbone.conv_head
+    target_layer = model1.backbone.conv_head
 except AttributeError:
-    target_layer = list(model.backbone.children())[-2]
-cam = GradCAM(model=model, target_layers=[target_layer])
+    target_layer = list(model1.backbone.children())[-2]
+cam = GradCAM(model=model1, target_layers=[target_layer])
 
 # =============================================
 # 2. CLINICAL DESCRIPTIONS (Vietnamese)
@@ -131,10 +135,19 @@ def predict(img: np.ndarray):
     std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
     tensor = (tensor - mean) / std
 
-    # --- Dự đoán ---
+    # --- Dự đoán (Hội chẩn 3 Chuyên gia) ---
     with torch.no_grad():
-        logits = model(tensor)
-        probs = torch.softmax(logits, dim=-1).squeeze().numpy()
+        logits1 = model1(tensor)
+        probs1 = torch.softmax(logits1, dim=-1).squeeze().numpy()
+        
+        logits2 = model2(tensor)
+        probs2 = torch.softmax(logits2, dim=-1).squeeze().numpy()
+        
+        logits3 = model3(tensor)
+        probs3 = torch.softmax(logits3, dim=-1).squeeze().numpy()
+        
+        # Hội chẩn: Lấy trung bình cộng dự đoán của cả 3 chuyên gia
+        probs = (probs1 + probs2 + probs3) / 3.0
 
     classes = [c.value for c in LesionClass]
     result_dict = {classes[i]: float(probs[i]) for i in range(len(classes))}
@@ -189,35 +202,104 @@ def predict(img: np.ndarray):
     return result_dict, heatmap_img, report
 
 
+def predict_xai(img: np.ndarray):
+    """Chay tat ca 4 phuong phap XAI, tra ve 4 anh overlay de so sanh."""
+    if img is None:
+        blank = np.zeros((224, 224, 3), dtype=np.uint8)
+        return blank, blank, blank, blank, blank
+
+    img_clean = preprocess_image(img, target_size=224)
+    img_float = np.float32(img_clean) / 255.0
+
+    tensor = torch.from_numpy(img_float.transpose(2, 0, 1)).unsqueeze(0)
+    mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+    std  = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+    tensor = (tensor - mean) / std
+
+    try:
+        target_layer = model1.backbone.conv_head
+    except AttributeError:
+        target_layer = list(model1.backbone.children())[-2]
+
+    print("Bat dau XAI Panel...")
+    xai = explain_all(model1, tensor, img_float, target_layer)
+
+    orig = (img_float * 255).astype(np.uint8)
+    return (
+        orig,
+        xai["GradCAM"],
+        xai["GradCAM++"],
+        xai["LIME"],
+        xai["IntGrad"],
+        xai["Occlusion"],
+    )
+
+
 # =============================================
 # 5. GRADIO WEB INTERFACE
 # =============================================
-with gr.Blocks(title="Trustworthy Medical AI - Phân loại Ung Thư Da") as demo:
+with gr.Blocks(title="Trustworthy Medical AI - Phan loai Ung Thu Da") as demo:
     gr.Markdown("""
-    # 🏥 Trợ lý Y khoa AI Đáng tin cậy (Trustworthy Medical AI)
-    Hệ thống chẩn đoán ung thư da tự động với khả năng **Giải thích Y khoa (Explainable AI)**,
-    giúp bác sĩ hiểu rõ **tại sao** AI đưa ra quyết định.
+    # 🏥 Tro ly Y khoa AI Dang tin cay (Trustworthy Medical AI)
+    He thong chan doan ung thu da tu dong voi kha nang **Giai thich Y khoa (Explainable AI)**,
+    giup bac si hieu ro **tai sao** AI dua ra quyet dinh.
 
-    > 🔬 **Tính năng chống học vẹt (Anti-Shortcut):** Ảnh sẽ được tự động cắt viền 15%
-    > để loại bỏ logo bệnh viện, watermark, và mũi tên nhân tạo trước khi phân tích.
+    > 🔬 **Tinh nang chong hoc vet (Anti-Shortcut):** Anh se duoc tu dong cat vien 15%
+    > de loai bo logo benh vien, watermark, va mui ten nhan tao truoc khi phan tich.
     """)
 
-    with gr.Row():
-        with gr.Column(scale=1):
-            input_img = gr.Image(label="📷 Tải ảnh Nốt ruồi / Da bệnh lên đây")
-            btn = gr.Button("🔍 Bắt đầu Phân tích", variant="primary", size="lg")
+    with gr.Tabs():
+        # ── Tab 1: Chẩn đoán chính ──────────────────────────────────
+        with gr.Tab("🔍 Chan Doan Chinh"):
+            with gr.Row():
+                with gr.Column(scale=1):
+                    input_img = gr.Image(label="📷 Tai anh Not ruoi / Da benh len day")
+                    btn = gr.Button("🔍 Bat dau Phan tich", variant="primary", size="lg")
+                    gr.Markdown("""
+                    **Huong dan su dung:**
+                    1. Tai anh chup vung da can phan tich
+                    2. Bam nut "Bat dau Phan tich"
+                    3. Doc ket qua chan doan va bao cao XAI
+                    """)
+                with gr.Column(scale=2):
+                    out_label   = gr.Label(num_top_classes=4, label="📊 Du doan cua AI")
+                    out_heatmap = gr.Image(label="🔥 Anh Grad-CAM Heatmap")
+                    out_report  = gr.Markdown(label="📋 Bao cao Giai thich (XAI)")
+            btn.click(predict, inputs=input_img,
+                      outputs=[out_label, out_heatmap, out_report])
+
+        # ── Tab 2: So sánh XAI Panel ─────────────────────────────────
+        with gr.Tab("🔬 So Sanh XAI (4 Phuong Phap)"):
             gr.Markdown("""
-            **Hướng dẫn sử dụng:**
-            1. Tải ảnh chụp vùng da cần phân tích
-            2. Bấm nút "Bắt đầu Phân tích"
-            3. Đọc kết quả chẩn đoán và báo cáo XAI
+            ### Panel So sanh 4 Phuong phap Giai thich AI
+            Moi phuong phap nhin anh theo mot cach khac nhau.
+            Vung sang = vung AI cho la quan trong nhat de dua ra quyet dinh.
+
+            | Phuong phap | Mo ta |
+            |-------------|-------|
+            | **Grad-CAM** | Gradient qua lop cuoi cung |
+            | **Grad-CAM++** | Nang cap, chinh xac hon khi nhieu vung benh |
+            | **LIME** | Che tung cum superpixel, xem thay doi gi |
+            | **Integrated Gradients** | Tich luy gradient (Google Research) |
+            | **Occlusion** | Trat o vuong den, do do giam xac suat |
             """)
+            with gr.Row():
+                xai_img   = gr.Image(label="📷 Anh goc (da xu ly)")
+                btn_xai   = gr.Button("🔬 Chay XAI Panel", variant="secondary", size="lg")
+            with gr.Row():
+                out_gc    = gr.Image(label="1️⃣ Grad-CAM")
+                out_gcpp  = gr.Image(label="2️⃣ Grad-CAM++")
+                out_lime  = gr.Image(label="3️⃣ LIME")
+            with gr.Row():
+                out_ig    = gr.Image(label="4️⃣ Integrated Gradients")
+                out_occ   = gr.Image(label="5️⃣ Occlusion Sensitivity")
+                gr.Markdown("""**Ghi chu:** LIME co the mat 20-30 giay.
+                Cac phuong phap khac rat nhanh (~2-5 giay).
+                """)
+            btn_xai.click(
+                predict_xai,
+                inputs=input_img,
+                outputs=[xai_img, out_gc, out_gcpp, out_lime, out_ig, out_occ]
+            )
 
-        with gr.Column(scale=2):
-            out_label = gr.Label(num_top_classes=4, label="📊 Dự đoán của AI")
-            out_heatmap = gr.Image(label="🔥 Ảnh X-Quang tư duy (Grad-CAM Heatmap)")
-            out_report = gr.Markdown(label="📋 Báo cáo Giải thích (Explainability)")
-
-    btn.click(predict, inputs=input_img, outputs=[out_label, out_heatmap, out_report])
-
-demo.launch(server_name="0.0.0.0", server_port=7860)
+demo.launch(server_name="0.0.0.0", server_port=7860, share=True)

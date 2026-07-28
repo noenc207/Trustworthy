@@ -37,9 +37,10 @@ class PADUFES20Manager(BaseDatasetManager):
         # The images are typically inside an 'images' subfolder or in the root depending on extraction
         self.images_dir = self.raw_dir
 
-    def _process_metadata(self) -> pd.DataFrame:
+    def process_and_clean(self) -> pd.DataFrame:
         """Parse PAD-UFES-20 metadata and map to standardized ISIC classes."""
         logger.info(f"Processing PAD-UFES-20 metadata from {self.metadata_path}")
+        self.setup_directories()
         if not self.metadata_path.exists():
             raise FileNotFoundError(f"PAD-UFES-20 metadata not found at {self.metadata_path}")
 
@@ -76,23 +77,12 @@ class PADUFES20Manager(BaseDatasetManager):
             })
 
         df_clean = pd.DataFrame(cleaned_data)
+        
+        # Save unified labels
+        cleaned_path = self.labels_dir / "cleaned.csv"
+        df_clean.to_csv(cleaned_path, index=False)
+        logger.info(f"Saved {len(df_clean)} unified records to {cleaned_path}")
+        
         return df_clean
 
-    def _split_strategy(self, df: pd.DataFrame) -> dict[str, pd.DataFrame]:
-        """Perform stratified split."""
-        skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-        
-        # 80/20 train/val split for fine-tuning
-        train_idx, val_idx = next(skf.split(df, df["class_id"]))
 
-        train_df = df.iloc[train_idx].copy()
-        val_df = df.iloc[val_idx].copy()
-        
-        # Since this is for fine-tuning, we can use val as test
-        test_df = val_df.copy()
-
-        return {
-            "train": train_df,
-            "val": val_df,
-            "test": test_df
-        }

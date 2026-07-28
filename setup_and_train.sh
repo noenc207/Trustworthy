@@ -19,8 +19,8 @@ sudo apt-get update -yqq
 sudo apt-get install -yqq python3-pip unzip
 
 # Dùng pip3 thay vì pip để chắc chắn ăn vào Python 3
-pip3 install -q torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-pip3 install -q pytorch-lightning hydra-core omegaconf timm \
+pip3 install --break-system-packages -q torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip3 install --break-system-packages -q pytorch-lightning hydra-core omegaconf timm \
     albumentations opencv-python-headless \
     torchmetrics loguru pandas scikit-learn \
     matplotlib seaborn "grad-cam" pydantic-settings mlflow
