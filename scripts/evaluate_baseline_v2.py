@@ -171,6 +171,32 @@ def evaluate(checkpoint_path: str, split: str = "test"):
         json.dump(metrics, f, indent=4, cls=NumpyEncoder)
         
     logger.info(f"Evaluation complete. Accuracy: {metrics['accuracy']:.4f}")
+    
+    # PHASE 19/30: Overconfidence detection — FIRST-CLASS FAILURE CASE
+    confs = np.array(all_confs)
+    labels_arr = np.array(all_labels)
+    preds_arr = np.array(all_preds)
+    wrong = labels_arr != preds_arr
+    
+    overconf_90 = np.sum((confs >= 0.90) & wrong)
+    overconf_95 = np.sum((confs >= 0.95) & wrong)
+    total_wrong = np.sum(wrong)
+    
+    metrics["overconfidence"] = {
+        "confidence_ge_0.90_and_wrong": int(overconf_90),
+        "confidence_ge_0.95_and_wrong": int(overconf_95),
+        "total_wrong": int(total_wrong),
+        "total_samples": int(len(labels_arr))
+    }
+    
+    if overconf_90 > 0:
+        logger.warning(f"OVERCONFIDENCE ALERT: {overconf_90} predictions with confidence >= 0.90 AND wrong")
+    if overconf_95 > 0:
+        logger.warning(f"CRITICAL OVERCONFIDENCE: {overconf_95} predictions with confidence >= 0.95 AND wrong")
+    
+    # Re-save metrics with overconfidence data
+    with open(out_dir / f"metrics_{split}.json", "w") as f:
+        json.dump(metrics, f, indent=4, cls=NumpyEncoder)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Evaluate OOD Robustness using Energy Score.
 """
 import pyrootutils
@@ -55,11 +55,56 @@ def evaluate_ood(checkpoint_path: str, ood_dataset_path: str = None):
         )
         return
         
-    # If an OOD dataset exists, we would load it and run inference
+    # If an OOD dataset exists, load and run real inference
     logger.info(f"OOD Dataset found at {ood_dataset_path}. Running inference...")
-    # Real OOD inference logic would go here
-    # Since we are in smoke test and no OOD dataset is provided yet, this branch is technically unreachable without args
-    logger.info("OOD evaluation unavailable (mocked out until real dataset config)")
+    
+    # Load OOD dataset using the same transforms as test data
+    from src.training.augmentation import get_val_transforms
+    from src.modules.dataset_manager.pytorch_dataset import SkinLesionDataset
+    from torch.utils.data import DataLoader
+    
+    ood_path = Path(ood_dataset_path)
+    ood_csv = ood_path / "labels" / "cleaned.csv"
+    if not ood_csv.exists():
+        raise FileNotFoundError(f"OOD dataset CSV not found at {ood_csv}")
+    
+    ood_dataset = SkinLesionDataset(cleaned_csv_path=ood_csv, transform=get_val_transforms(224), image_size=224)
+    ood_loader = DataLoader(ood_dataset, batch_size=32, shuffle=False)
+    
+    # Load model from checkpoint for OOD inference
+    model_module = SkinLesionLightningModule.load_from_checkpoint(checkpoint_path, strict=True)
+    model = model_module.model
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    model.eval()
+    
+    ood_logits_list = []
+    with torch.no_grad():
+        for batch in ood_loader:
+            x, y = batch[0], batch[1]
+            x = x.to(device)
+            logits = model(x)
+            ood_logits_list.append(logits.cpu())
+    
+    ood_logits = torch.cat(ood_logits_list, dim=0)
+    ood_energy = compute_energy_score(ood_logits).numpy()
+    
+    logger.info(f"Computed Energy Scores for {len(ood_energy)} OOD samples.")
+    
+    # Compute OOD AUROC
+    from sklearn.metrics import roc_auc_score
+    labels = np.concatenate([np.ones(len(id_energy)), np.zeros(len(ood_energy))])
+    scores = np.concatenate([-id_energy, -ood_energy])  # Higher energy = more OOD, negate for AUROC convention
+    ood_auroc = roc_auc_score(labels, scores)
+    
+    logger.info(f"OOD AUROC (Energy): {ood_auroc:.4f}")
+    
+    np.savez(
+        results_dir / "ood_scores.npz",
+        id_energy=id_energy,
+        ood_energy=ood_energy,
+        ood_auroc=ood_auroc
+    )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -34,8 +34,8 @@ import typing
 from torch.serialization import add_safe_globals
 try:
     add_safe_globals([DictConfig, ListConfig, omegaconf.base.ContainerMetadata, omegaconf.nodes.AnyNode, typing.Any])
-except Exception:
-    pass
+except ImportError:
+    logger.warning("torch.serialization.add_safe_globals not available in this PyTorch version")
 
 from pytorch_lightning.callbacks import (
     EarlyStopping,

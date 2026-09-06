@@ -1,7 +1,7 @@
-image_id,dx
-ISIC_001,mel
-ISIC_002,nv
-ISIC_003,bcc
-ISIC_004,mel
-ISIC_005,nv
-ISIC_006,bcc
+image_id,dx,lesion_id
+ISIC_001,mel,L_001
+ISIC_002,nv,L_002
+ISIC_003,bcc,L_003
+ISIC_004,mel,L_001
+ISIC_005,nv,L_002
+ISIC_006,bcc,L_003

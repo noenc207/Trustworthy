@@ -5,7 +5,7 @@ Provides standard async CRUD functionality using generics.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, TypeVar
+from typing import Any, TypeVar, Generic
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -19,7 +19,7 @@ CreateSchemaType = TypeVar("CreateSchemaType", bound=BaseModel)
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=BaseModel)
 
 
-class BaseRepository[ModelType: Base, CreateSchemaType: BaseModel, UpdateSchemaType: BaseModel]:
+class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """
     Base class containing standard CRUD operations.
     """

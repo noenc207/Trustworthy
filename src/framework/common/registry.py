@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import threading
 from collections.abc import Callable
-from typing import TypeVar
+from typing import TypeVar, Generic
 
 T = TypeVar("T")
 
@@ -15,7 +15,7 @@ class RegistryFrozenError(Exception):
     """Raised when attempting to modify a frozen registry."""
 
 
-class ComponentRegistry[T]:
+class ComponentRegistry(Generic[T]):
     """
     Generic, thread-safe, typed component registry.
     Supports lazy instantiation and plugin discovery.
