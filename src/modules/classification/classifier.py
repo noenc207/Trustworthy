@@ -58,17 +58,12 @@ class SkinLesionClassifier(nn.Module):
         )
         feature_dim = self.backbone.num_features
 
-        # Custom classifier head
+        # Custom classifier head (Simplified for Baseline V2 interpretability)
         self.head = nn.Sequential(
-            nn.Identity(),
             nn.Flatten(),
             nn.BatchNorm1d(feature_dim),
             nn.Dropout(p=drop_rate),
-            nn.Linear(feature_dim, 512),
-            nn.GELU(),
-            nn.BatchNorm1d(512),
-            nn.Dropout(p=drop_rate / 2),
-            nn.Linear(512, num_classes),
+            nn.Linear(feature_dim, num_classes)
         )
 
     def _needs_pooling(self) -> bool:

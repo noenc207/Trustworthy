@@ -41,10 +41,9 @@ class SkinLesionDataModule(pl.LightningDataModule):
         """Initialize datasets and samplers."""
         dataset_name = self.dataset_cfg.get("name", "synthetic")
 
-        # Synthetic mock flow for fallback tests
+        # Synthetic mock flow is forbidden in production research
         if dataset_name == "synthetic":
-            self._setup_synthetic(stage)
-            return
+            raise ValueError("Synthetic mock dataset is forbidden for real training/evaluation.")
 
         from omegaconf import OmegaConf
         import dataclasses
@@ -99,25 +98,6 @@ class SkinLesionDataModule(pl.LightningDataModule):
                 transform=val_transforms,
                 image_size=img_size
             )
-
-    def _setup_synthetic(self, stage: str | None = None) -> None:
-        torch.manual_seed(42)
-        num_classes = len(LesionClass)
-
-        def make_synthetic(size: int) -> GenericSkinLesionDataset:
-            data = []
-            for _ in range(size):
-                data.append({
-                    "image": torch.randn(3, 224, 224),
-                    "label": torch.randint(0, num_classes, (1,)).squeeze()
-                })
-            return GenericSkinLesionDataset(data)
-
-        if stage == "fit" or stage is None:
-            self.train_dataset = make_synthetic(100)
-            self.val_dataset = make_synthetic(20)
-        if stage == "test" or stage is None:
-            self.test_dataset = make_synthetic(20)
 
     def train_dataloader(self) -> DataLoader:
         assert self.train_dataset is not None

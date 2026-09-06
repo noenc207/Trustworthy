@@ -12,6 +12,7 @@ import torch
 import cv2
 import numpy as np
 
+from src.core.constants import NORMALIZE_MEAN, NORMALIZE_STD
 # === Fix PyTorch 2.6+ serialization ===
 try:
     import omegaconf
@@ -39,8 +40,10 @@ def load_ckpt(model, path):
     if not os.path.exists(path):
         raise FileNotFoundError(f"Không tìm thấy {path}")
     ckpt = torch.load(path, map_location='cpu', weights_only=False)
-    state_dict = {k.replace('model.', ''): v for k, v in ckpt['state_dict'].items() if k.startswith('model.')}
-    model.load_state_dict(state_dict, strict=False)
+    # Fix: strip only the 'model.' prefix (not all occurrences in the key)
+    prefix = 'model.'
+    state_dict = {k[len(prefix):]: v for k, v in ckpt['state_dict'].items() if k.startswith(prefix)}
+    model.load_state_dict(state_dict, strict=True)
     model.eval()
     return model
 
@@ -131,8 +134,8 @@ def predict(img: np.ndarray):
 
     # --- Chuyển thành Tensor ---
     tensor = torch.from_numpy(img_float.transpose(2, 0, 1)).unsqueeze(0)
-    mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
-    std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+    mean = torch.tensor(NORMALIZE_MEAN).view(1, 3, 1, 1)
+    std = torch.tensor(NORMALIZE_STD).view(1, 3, 1, 1)
     tensor = (tensor - mean) / std
 
     # --- Dự đoán (Hội chẩn 3 Chuyên gia) ---
@@ -212,8 +215,8 @@ def predict_xai(img: np.ndarray):
     img_float = np.float32(img_clean) / 255.0
 
     tensor = torch.from_numpy(img_float.transpose(2, 0, 1)).unsqueeze(0)
-    mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
-    std  = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+    mean = torch.tensor(NORMALIZE_MEAN).view(1, 3, 1, 1)
+    std  = torch.tensor(NORMALIZE_STD).view(1, 3, 1, 1)
     tensor = (tensor - mean) / std
 
     try:

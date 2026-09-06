@@ -21,8 +21,22 @@ import hydra
 import mlflow
 import pytorch_lightning as pl
 import torch
+original_load = torch.load
+def safe_load(*args, **kwargs):
+    kwargs['weights_only'] = False
+    return original_load(*args, **kwargs)
+torch.load = safe_load
 import torch.nn as nn
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig, ListConfig, OmegaConf
+import omegaconf.base
+import omegaconf.nodes
+import typing
+from torch.serialization import add_safe_globals
+try:
+    add_safe_globals([DictConfig, ListConfig, omegaconf.base.ContainerMetadata, omegaconf.nodes.AnyNode, typing.Any])
+except Exception:
+    pass
+
 from pytorch_lightning.callbacks import (
     EarlyStopping,
     LearningRateMonitor,
@@ -201,60 +215,6 @@ class GenericSkinLesionDataset(Dataset):
         return item["image"], item["label"]
 
 
-class SkinLesionDataModule(pl.LightningDataModule):
-    """
-    PyTorch Lightning DataModule.
-
-    Manages all dataset loading, augmentation, and DataLoader creation.
-    Supports: synthetic testing and generic adapters.
-    """
-
-    def __init__(self, cfg: DictConfig) -> None:
-        super().__init__()
-        self.cfg = cfg
-        self.batch_size = cfg.get("dataset", {}).get("batch_size", 32)
-        self.num_workers = cfg.get("dataset", {}).get("num_workers", 0)
-        self.train_dataset: Dataset | None = None
-        self.val_dataset: Dataset | None = None
-        self.test_dataset: Dataset | None = None
-
-    def setup(self, stage: str | None = None) -> None:
-        """Load datasets for train/val/test splits."""
-        dataset_name = self.cfg.get("dataset", {}).get("name", "synthetic")
-
-        if dataset_name == "synthetic":
-            # Generate synthetic deterministic data for testing
-            torch.manual_seed(42)
-            num_classes = len(LesionClass)
-
-            def make_synthetic(size: int) -> GenericSkinLesionDataset:
-                data = []
-                for _ in range(size):
-                    data.append({
-                        "image": torch.randn(3, 224, 224),
-                        "label": torch.randint(0, num_classes, (1,)).squeeze()
-                    })
-                return GenericSkinLesionDataset(data)
-
-            if stage == "fit" or stage is None:
-                self.train_dataset = make_synthetic(100)
-                self.val_dataset = make_synthetic(20)
-            if stage == "test" or stage is None:
-                self.test_dataset = make_synthetic(20)
-        else:
-            raise ValueError(f"Dataset {dataset_name} adapter not implemented in generic module.")
-
-    def train_dataloader(self) -> DataLoader:
-        assert self.train_dataset is not None
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
-
-    def val_dataloader(self) -> DataLoader:
-        assert self.val_dataset is not None
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
-
-    def test_dataloader(self) -> DataLoader:
-        assert self.test_dataset is not None
-        return DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
 
 
 @hydra.main(version_base="1.3", config_path="../../configs", config_name="train")
@@ -275,14 +235,7 @@ def train(cfg: DictConfig) -> None:
     if "model" in cfg and cfg.model is not None:
         model_instance = hydra.utils.instantiate(cfg.model)
     else:
-        # For standalone script execution fallback
-        model_instance = nn.Sequential(
-            nn.Conv2d(3, 16, 3, padding=1),
-            nn.ReLU(),
-            nn.AdaptiveAvgPool2d((1, 1)),
-            nn.Flatten(),
-            nn.Linear(16, len(LesionClass))
-        )
+        raise ValueError("Model configuration is missing. Cannot instantiate model.")
 
     model = SkinLesionLightningModule(cfg, model=model_instance)
 

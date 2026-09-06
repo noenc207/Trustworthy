@@ -28,31 +28,31 @@ class SkinLesionDataset(Dataset):
         indices_csv_path: str | Path | None = None,
         transform: Callable | None = None,
         image_size: int = 224,
+        return_metadata: bool = False,
     ) -> None:
         """
         Args:
             cleaned_csv_path: Path to `labels/cleaned.csv`.
-            indices_csv_path: Optional path to a split indices file (e.g., `splits/train_indices.csv`).
-                              If None, loads the entire dataset.
+            indices_csv_path: Optional path to a split indices file.
             transform: Optional albumentations or torchvision transform.
-            image_size: Target image size for basic resizing if no transform is provided.
+            image_size: Target image size.
+            return_metadata: If True, returns a tuple of (img, class_id, metadata_dict).
         """
         self.df = pd.read_csv(cleaned_csv_path)
         self.transform = transform
         self.image_size = image_size
+        self.return_metadata = return_metadata
 
         if indices_csv_path:
-            # Filter the dataframe to only include the specified image IDs
             indices_df = pd.read_csv(indices_csv_path, header=None, names=["image_id"])
             self.df = self.df.merge(indices_df, on="image_id", how="inner")
 
-        # Optimization: convert to dict/list for faster indexing than pandas iterrows
         self.records = self.df.to_dict("records")
 
     def __len__(self) -> int:
         return len(self.records)
 
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, int]:
+    def __getitem__(self, idx: int) -> tuple | dict:
         record = self.records[idx]
         img_path = record["path"]
         class_id = int(record["class_id"])
@@ -64,17 +64,16 @@ class SkinLesionDataset(Dataset):
 
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        # Apply transformations if provided (e.g. albumentations)
         if self.transform:
-            # Albumentations standard signature
             augmented = self.transform(image=img)
             img = augmented["image"]
-            # Assuming Albumentations ToTensorV2 is used, it returns a tensor
             if not isinstance(img, torch.Tensor):
                 img = self._default_transform(img)
         else:
             img = self._default_transform(img)
 
+        if self.return_metadata:
+            return img, class_id, record
         return img, class_id
 
     def _default_transform(self, img: np.ndarray) -> torch.Tensor:

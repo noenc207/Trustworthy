@@ -58,12 +58,18 @@ class HAM10000Manager(BaseDatasetManager):
             # or we construct the path by searching, but sticking to standard structure:
             img_path = self.raw_dir / f"{img_id}.jpg"
 
-            cleaned_records.append({
+            record = {
                 "image_id": img_id,
                 "class_id": list(LesionClass).index(class_enum),
                 "class_name": class_enum.value,
                 "path": str(img_path.absolute()),
-            })
+            }
+            if "lesid" in row and pd.notna(row["lesid"]):
+                record["lesion_id"] = row["lesid"]
+            elif "lesion_id" in row and pd.notna(row["lesion_id"]):
+                record["lesion_id"] = row["lesion_id"]
+                
+            cleaned_records.append(record)
 
         cleaned_df = pd.DataFrame(cleaned_records)
 

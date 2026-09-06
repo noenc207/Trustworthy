@@ -1,0 +1,9 @@
+﻿Experiment_ID,Model,Loss,Imbalance_Strategy,Augmentation,Seed
+EXP_001,EfficientNet-B4,CE+LS(0.1),None,Standard,42
+EXP_002,ResNet-50,CE+LS(0.1),None,Standard,42
+EXP_003,DenseNet-121,CE+LS(0.1),None,Standard,42
+EXP_004,EfficientNet-B4,FocalLoss,None,Standard,42
+EXP_005,EfficientNet-B4,CE+LS(0.1),ClassWeights,Standard,42
+EXP_006,EfficientNet-B4,CE+LS(0.1),None,Moderate,42
+EXP_007,EfficientNet-B4,CE+LS(0.1),None,Moderate,123
+EXP_008,EfficientNet-B4,CE+LS(0.1),None,Moderate,3407

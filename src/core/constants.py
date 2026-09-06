@@ -54,10 +54,17 @@ SUPPORTED_ARCHITECTURES: list[str] = [
     "swin_base_patch4_window7_224",
 ]
 
-# Image preprocessing constants
-IMAGE_MEAN: tuple[float, float, float] = (0.763, 0.546, 0.570)
-IMAGE_STD:  tuple[float, float, float] = (0.141, 0.152, 0.169)
+# Image preprocessing constants — Canonical normalization (ImageNet)
+# All pretrained backbones (EfficientNet, ResNet, DenseNet) expect ImageNet distribution.
+# Using dataset-specific stats (ISIC) with ImageNet-pretrained weights is incorrect.
+NORMALIZE_MEAN: tuple[float, float, float] = (0.485, 0.456, 0.406)
+NORMALIZE_STD: tuple[float, float, float] = (0.229, 0.224, 0.225)
 DEFAULT_IMAGE_SIZE: int = 224
+
+# DEPRECATED: ISIC dataset-specific stats. Kept for backward compatibility only.
+# DO NOT USE for new training or inference. Use NORMALIZE_MEAN/NORMALIZE_STD.
+IMAGE_MEAN: tuple[float, float, float] = (0.763, 0.546, 0.570)
+IMAGE_STD: tuple[float, float, float] = (0.141, 0.152, 0.169)
 
 # Minimum quality score for valid images
 MIN_QUALITY_SCORE: float = 0.5

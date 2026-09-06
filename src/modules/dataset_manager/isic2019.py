@@ -40,12 +40,17 @@ class ISIC2019Manager(BaseDatasetManager):
         if "image" not in df.columns:
             raise ValueError("Metadata missing required 'image' column")
 
+        metadata_extra_file = self.raw_dir / "ISIC_2019_Training_Metadata.csv"
+        if metadata_extra_file.exists():
+            meta_df = pd.read_csv(metadata_extra_file)
+            if "image" in meta_df.columns and "lesion_id" in meta_df.columns:
+                df = pd.merge(df, meta_df[["image", "lesion_id"]], on="image", how="left")
+
         cleaned_records = []
         for _, row in df.iterrows():
             img_id = row["image"]
 
             # Map one-hot encoded row to a single class
-            # ISIC 2019 columns: MEL, NV, BCC, AK, BKL, DF, VASC, SCC, UNK
             lesion_class = None
             if row.get("MEL", 0.0) == 1.0:
                 lesion_class = LesionClass.MEL
@@ -62,20 +67,23 @@ class ISIC2019Manager(BaseDatasetManager):
             elif row.get("VASC", 0.0) == 1.0:
                 lesion_class = LesionClass.VASC
             elif row.get("SCC", 0.0) == 1.0:
-                # Map SCC to AKIEC or treat separately. Here we map to AKIEC to keep 7 classes
                 lesion_class = LesionClass.AKIEC
             else:
                 logger.warning(f"Skipping row with unknown/unmapped class for image {img_id}")
                 continue
 
             img_path = self.raw_dir / f"{img_id}.jpg"
-
-            cleaned_records.append({
+            
+            record = {
                 "image_id": img_id,
                 "class_id": list(LesionClass).index(lesion_class),
                 "class_name": lesion_class.value,
                 "path": str(img_path.absolute()),
-            })
+            }
+            if "lesion_id" in row and pd.notna(row["lesion_id"]):
+                record["lesion_id"] = row["lesion_id"]
+                
+            cleaned_records.append(record)
 
         cleaned_df = pd.DataFrame(cleaned_records)
 

@@ -13,6 +13,8 @@ Yeu cau them:
 """
 import cv2
 import numpy as np
+
+from src.core.constants import NORMALIZE_MEAN, NORMALIZE_STD
 import torch
 import torch.nn.functional as F
 from PIL import Image
@@ -50,8 +52,8 @@ def run_lime(model, img_float_rgb, device="cpu", num_samples=500):
     except ImportError:
         raise ImportError("Cai them LIME: pip install lime scikit-image")
 
-    mean = np.array([0.485, 0.456, 0.406])
-    std  = np.array([0.229, 0.224, 0.225])
+    mean = np.array(NORMALIZE_MEAN)
+    std  = np.array(NORMALIZE_STD)
 
     def predict_fn(images):
         """LIME goi ham nay voi mang anh uint8 (N, H, W, 3)."""

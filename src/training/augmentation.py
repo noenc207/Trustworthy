@@ -17,7 +17,7 @@ import numpy as np
 import torch
 from albumentations.pytorch import ToTensorV2
 
-from src.core.constants import IMAGE_MEAN, IMAGE_STD
+from src.core.constants import NORMALIZE_MEAN, NORMALIZE_STD
 
 
 def get_train_transforms(image_size: int = 224) -> A.Compose:
@@ -32,7 +32,8 @@ def get_train_transforms(image_size: int = 224) -> A.Compose:
     return A.Compose([
         # === PHASE 1: ANTI-WATERMARK - Zoom vào trung tâm, cắt bỏ viền ===
         A.RandomResizedCrop(
-            size=(image_size, image_size),
+            height=image_size,
+            width=image_size,
             scale=(0.5, 0.85),  # Zoom mạnh hơn bản cũ (0.8-1.0) để cắt logo
             ratio=(0.9, 1.1),
         ),
@@ -67,7 +68,7 @@ def get_train_transforms(image_size: int = 224) -> A.Compose:
         A.ImageCompression(quality_lower=70, quality_upper=100, p=0.2),
 
         # === PHASE 6: Normalize và chuyển sang Tensor ===
-        A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),
+        A.Normalize(mean=NORMALIZE_MEAN, std=NORMALIZE_STD),
         ToTensorV2(),
     ])
 
@@ -79,9 +80,9 @@ def get_val_transforms(image_size: int = 224) -> A.Compose:
     """
     return A.Compose([
         # Resize lớn hơn rồi CenterCrop để cắt viền logo
-        A.Resize(size=(int(image_size * 1.3), int(image_size * 1.3))),
-        A.CenterCrop(size=(image_size, image_size)),
-        A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),
+        A.Resize(height=int(image_size * 1.3), width=int(image_size * 1.3)),
+        A.CenterCrop(height=image_size, width=image_size),
+        A.Normalize(mean=NORMALIZE_MEAN, std=NORMALIZE_STD),
         ToTensorV2(),
     ])
 
@@ -98,7 +99,7 @@ def get_tta_transforms(image_size: int = 224) -> list[A.Compose]:
         A.CenterCrop(size=(image_size, image_size)),
     ]
     base_post = [
-        A.Normalize(mean=IMAGE_MEAN, std=IMAGE_STD),
+        A.Normalize(mean=NORMALIZE_MEAN, std=NORMALIZE_STD),
         ToTensorV2(),
     ]
 

@@ -96,42 +96,51 @@ class BaseDatasetManager(ABC):
         return is_valid
 
     def generate_splits(self, df: pd.DataFrame) -> None:
-        """Generate stratified train/val/test splits."""
-        logger.info("Generating stratified train/val/test splits...")
-        train_ratio = self.config.splits.train_ratio
-        val_ratio = self.config.splits.val_ratio
-        test_ratio = self.config.splits.test_ratio
-
-        # Verify ratios sum to 1.0 (allow small float variations)
-        assert abs((train_ratio + val_ratio + test_ratio) - 1.0) < 1e-5, "Splits must sum to 1.0"
-
-        # Extract features and targets
-        X = df["image_id"].values
-        y = df["class_id"].values
-
-        # Split 1: Train vs (Val + Test)
-        X_train, X_temp, y_train, y_temp = train_test_split(
-            X, y,
-            train_size=train_ratio,
-            stratify=y,
-            random_state=self.config.splits.seed
+        """Generate group-stratified train/val/cal/test splits to prevent patient leakage."""
+        logger.info("Generating grouped train/val/calibration/test splits...")
+        
+        from src.modules.dataset_manager.patient_split import patient_level_split, SplitConfig, save_split
+        
+        # In case config lacks calibration_ratio, we add a default
+        cal_ratio = getattr(self.config.splits, 'calibration_ratio', 0.06)
+        train_ratio = getattr(self.config.splits, 'train_ratio', 0.70)
+        val_ratio = getattr(self.config.splits, 'val_ratio', 0.10)
+        test_ratio = getattr(self.config.splits, 'test_ratio', 0.14)
+        
+        # Ensure it sums to 1.0 (might need normalization)
+        total = train_ratio + val_ratio + cal_ratio + test_ratio
+        
+        split_cfg = SplitConfig(
+            train_ratio=train_ratio / total,
+            val_ratio=val_ratio / total,
+            calibration_ratio=cal_ratio / total,
+            test_ratio=test_ratio / total,
+            seed=self.config.splits.seed,
+            group_column="lesion_id",
+            stratify_column="class_id"
         )
-
-        # Split 2: Val vs Test
-        val_relative_ratio = val_ratio / (val_ratio + test_ratio)
-        X_val, X_test, _, _ = train_test_split(
-            X_temp, y_temp,
-            train_size=val_relative_ratio,
-            stratify=y_temp,
-            random_state=self.config.splits.seed
-        )
-
-        # Save indices
+        
+        result = patient_level_split(df, split_cfg)
+        
+        # Save indices (CSV format containing image_id)
         self.splits_dir.mkdir(exist_ok=True)
-        for name, data in [("train", X_train), ("val", X_val), ("test", X_test)]:
+        
+        # Extract image_ids using the indices
+        image_ids = df["image_id"].values
+        
+        splits = {
+            "train": image_ids[result.train_indices],
+            "val": image_ids[result.val_indices],
+            "cal": image_ids[result.calibration_indices],
+            "test": image_ids[result.test_indices]
+        }
+        
+        for name, data in splits.items():
             pd.Series(data).to_csv(self.splits_dir / f"{name}_indices.csv", index=False, header=False)
-
-        logger.info(f"Splits saved: Train={len(X_train)}, Val={len(X_val)}, Test={len(X_test)}")
+            
+        save_split(result, self.splits_dir)
+        
+        logger.info(f"Splits saved: Train={len(splits['train'])}, Val={len(splits['val'])}, Cal={len(splits['cal'])}, Test={len(splits['test'])}")
 
     def generate_kfolds(self, df: pd.DataFrame) -> None:
         """Generate K-Fold stratified splits if enabled in config."""

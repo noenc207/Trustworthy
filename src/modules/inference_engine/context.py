@@ -77,6 +77,27 @@ class PipelineContext:
     explanation: Any | None = None
     recommendation: Any | None = None
 
+    # === DERMA-ACT: Active Evidence Acquisition State ===
+    # Active perception loop state
+    active_state: Any | None = None  # EvidenceState dataclass
+    observation_history: list[tuple[int, Any]] = field(default_factory=list)  # (action_idx, features)
+    candidate_actions: list[int] = field(default_factory=list)
+    action_scores: dict[int, float] = field(default_factory=dict)
+
+    # Evidence map from self-critique
+    evidence_map: dict[str, Any] = field(default_factory=dict)
+    supporting_evidence: list[str] = field(default_factory=list)
+    contradicting_evidence: list[str] = field(default_factory=list)
+    missing_evidence: list[str] = field(default_factory=list)
+
+    # Decision quality and safety
+    fragility_score: float | None = None
+    evidence_budget: int = 3
+    stopping_score: float | None = None
+    prediction_set: set[int] = field(default_factory=set)
+    selective_risk: float | None = None
+    selective_decision: str | None = None  # "classify" | "differential" | "review" | "abstain"
+
     def add_warning(self, msg: str) -> None:
         self.warnings.append(msg)
 
