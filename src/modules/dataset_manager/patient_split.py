@@ -164,6 +164,10 @@ def patient_level_split(
                 "This may cause data leakage if multiple images belong to the same patient."
             )
 
+    if df[group_col].isnull().any():
+        logger.info(f"Filling missing {group_col} values with individual image IDs.")
+        df[group_col] = df[group_col].fillna(df["image_id"]).astype(str)
+
     groups = df[group_col].values
     labels = df[config.stratify_column].values
     unique_groups = np.unique(groups)
