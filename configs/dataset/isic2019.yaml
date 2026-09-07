@@ -1,0 +1,24 @@
+# ISIC 2019 Dataset Configuration
+name: isic2019
+base_path: data/isic2019
+version: "v1.0"
+image_size: 224
+batch_size: 32
+num_workers: 4
+pin_memory: true
+use_weighted_sampler: true
+
+validation:
+  check_corrupted: false
+  allow_missing: true
+
+splits:
+  train_ratio: 0.70
+  val_ratio: 0.10
+  calibration_ratio: 0.05
+  test_ratio: 0.15
+  seed: 42
+
+kfold:
+  enabled: false
+  n_splits: 5

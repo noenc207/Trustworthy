@@ -1,9 +1,14 @@
 """
 Enhanced Data Module for PyTorch Lightning.
 Connects the dataset managers, augmentations, and samplers.
+
+SAFETY: This module enforces split manifests for ALL splits.
+If any split manifest is missing, the module REFUSES to proceed.
+Silent full-dataset loading is IMPOSSIBLE.
 """
 from __future__ import annotations
 
+import pandas as pd
 import pytorch_lightning as pl
 import torch
 from loguru import logger
@@ -22,6 +27,12 @@ from src.training.train_pipeline import GenericSkinLesionDataset
 class SkinLesionDataModule(pl.LightningDataModule):
     """
     Enhanced DataModule supporting real dataset managers, augmentations, and samplers.
+    
+    SAFETY INVARIANTS:
+    1. Every split MUST have a corresponding manifest file.
+    2. If a manifest is missing, the module will attempt to generate splits.
+    3. If generation fails, the module raises RuntimeError.
+    4. Silent full-dataset loading is IMPOSSIBLE.
     """
 
     def __init__(self, cfg: DictConfig) -> None:
@@ -32,9 +43,10 @@ class SkinLesionDataModule(pl.LightningDataModule):
         self.num_workers = self.dataset_cfg.get("num_workers", 4)
         self.pin_memory = self.dataset_cfg.get("pin_memory", True)
 
-        self.train_dataset: torch.utils.data.Dataset | None = None
-        self.val_dataset: torch.utils.data.Dataset | None = None
-        self.test_dataset: torch.utils.data.Dataset | None = None
+        self.train_dataset: SkinLesionDataset | None = None
+        self.val_dataset: SkinLesionDataset | None = None
+        self.cal_dataset: SkinLesionDataset | None = None
+        self.test_dataset: SkinLesionDataset | None = None
         self.train_sampler = None
 
     def setup(self, stage: str | None = None) -> None:
@@ -64,25 +76,63 @@ class SkinLesionDataModule(pl.LightningDataModule):
             df = manager.process_and_clean()
             manager.generate_splits(df)
             manager.generate_statistics(df)
-
+        
+        # SAFETY: Always verify split manifests exist
         splits_dir = manager.splits_dir
+        required_splits = {
+            "train": splits_dir / "train_indices.csv",
+            "val": splits_dir / "val_indices.csv",
+            "test": splits_dir / "test_indices.csv",
+        }
+        # cal_indices.csv is also required
+        cal_path = splits_dir / "cal_indices.csv"
+        required_splits["calibration"] = cal_path
+
+        missing_splits = {name: path for name, path in required_splits.items() if not path.exists()}
+        
+        if missing_splits:
+            logger.warning(f"Missing split manifests: {list(missing_splits.keys())}. Attempting to regenerate...")
+            df = pd.read_csv(labels_path)
+            manager.generate_splits(df)
+            
+            # Re-check after generation
+            still_missing = {name: path for name, path in required_splits.items() if not path.exists()}
+            if still_missing:
+                raise RuntimeError(
+                    f"FATAL: Split manifests still missing after regeneration: "
+                    f"{[(name, str(path)) for name, path in still_missing.items()]}. "
+                    f"Cannot proceed without split integrity."
+                )
 
         if stage == "fit" or stage is None:
-            train_idx_path = splits_dir / "train_indices.csv"
-            val_idx_path = splits_dir / "val_indices.csv"
+            train_idx_path = required_splits["train"]
+            val_idx_path = required_splits["val"]
 
             self.train_dataset = SkinLesionDataset(
                 cleaned_csv_path=labels_path,
-                indices_csv_path=train_idx_path if train_idx_path.exists() else None,
+                indices_csv_path=train_idx_path,
                 transform=train_transforms,
-                image_size=img_size
+                image_size=img_size,
+                split_name="train",
             )
             self.val_dataset = SkinLesionDataset(
                 cleaned_csv_path=labels_path,
-                indices_csv_path=val_idx_path if val_idx_path.exists() else None,
+                indices_csv_path=val_idx_path,
                 transform=val_transforms,
-                image_size=img_size
+                image_size=img_size,
+                split_name="val",
             )
+            
+            # Verify dataset lengths match manifest lengths
+            train_manifest = pd.read_csv(train_idx_path, header=None)
+            val_manifest = pd.read_csv(val_idx_path, header=None)
+            assert len(self.train_dataset) == len(train_manifest), (
+                f"Train dataset length ({len(self.train_dataset)}) != manifest ({len(train_manifest)})"
+            )
+            assert len(self.val_dataset) == len(val_manifest), (
+                f"Val dataset length ({len(self.val_dataset)}) != manifest ({len(val_manifest)})"
+            )
+            logger.info(f"Train: {len(self.train_dataset)} samples, Val: {len(self.val_dataset)} samples")
 
             # Setup optional samplers
             if self.dataset_cfg.get("use_weighted_sampler", False):
@@ -91,16 +141,37 @@ class SkinLesionDataModule(pl.LightningDataModule):
                 logger.info("Using WeightedClassSampler for training.")
 
         if stage == "test" or stage is None:
-            test_idx_path = splits_dir / "test_indices.csv"
+            test_idx_path = required_splits["test"]
             self.test_dataset = SkinLesionDataset(
                 cleaned_csv_path=labels_path,
-                indices_csv_path=test_idx_path if test_idx_path.exists() else None,
+                indices_csv_path=test_idx_path,
                 transform=val_transforms,
-                image_size=img_size
+                image_size=img_size,
+                split_name="test",
             )
+            test_manifest = pd.read_csv(test_idx_path, header=None)
+            assert len(self.test_dataset) == len(test_manifest), (
+                f"Test dataset length ({len(self.test_dataset)}) != manifest ({len(test_manifest)})"
+            )
+            logger.info(f"Test: {len(self.test_dataset)} samples")
+        
+        if stage == "calibration" or stage is None:
+            cal_idx_path = required_splits["calibration"]
+            self.cal_dataset = SkinLesionDataset(
+                cleaned_csv_path=labels_path,
+                indices_csv_path=cal_idx_path,
+                transform=val_transforms,
+                image_size=img_size,
+                split_name="calibration",
+            )
+            cal_manifest = pd.read_csv(cal_idx_path, header=None)
+            assert len(self.cal_dataset) == len(cal_manifest), (
+                f"Cal dataset length ({len(self.cal_dataset)}) != manifest ({len(cal_manifest)})"
+            )
+            logger.info(f"Calibration: {len(self.cal_dataset)} samples")
 
     def train_dataloader(self) -> DataLoader:
-        assert self.train_dataset is not None
+        assert self.train_dataset is not None, "Train dataset not initialized. Call setup('fit') first."
         shuffle = self.train_sampler is None
         return DataLoader(
             self.train_dataset,
@@ -112,7 +183,7 @@ class SkinLesionDataModule(pl.LightningDataModule):
         )
 
     def val_dataloader(self) -> DataLoader:
-        assert self.val_dataset is not None
+        assert self.val_dataset is not None, "Val dataset not initialized. Call setup('fit') first."
         return DataLoader(
             self.val_dataset,
             batch_size=self.batch_size,
@@ -121,8 +192,18 @@ class SkinLesionDataModule(pl.LightningDataModule):
             pin_memory=self.pin_memory,
         )
 
+    def cal_dataloader(self) -> DataLoader:
+        assert self.cal_dataset is not None, "Calibration dataset not initialized. Call setup('calibration') first."
+        return DataLoader(
+            self.cal_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+        )
+
     def test_dataloader(self) -> DataLoader:
-        assert self.test_dataset is not None
+        assert self.test_dataset is not None, "Test dataset not initialized. Call setup('test') first."
         return DataLoader(
             self.test_dataset,
             batch_size=self.batch_size,
