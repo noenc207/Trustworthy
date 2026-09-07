@@ -39,6 +39,7 @@ class SkinLesionDataset(Dataset):
             return_metadata: If True, returns a tuple of (img, class_id, metadata_dict).
         """
         self.df = pd.read_csv(cleaned_csv_path)
+        self.df = self.df.fillna("")
         self.transform = transform
         self.image_size = image_size
         self.return_metadata = return_metadata
