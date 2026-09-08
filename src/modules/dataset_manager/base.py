@@ -115,7 +115,7 @@ class BaseDatasetManager(ABC):
             val_ratio=val_ratio / total,
             calibration_ratio=cal_ratio / total,
             test_ratio=test_ratio / total,
-            seed=self.config.splits.seed,
+            seed=self.config.splits.get("seed", 42) if isinstance(self.config.splits, dict) else getattr(self.config.splits, "seed", 42),
             group_column="lesion_id",
             stratify_column="class_id"
         )
