@@ -8,6 +8,14 @@ import hydra
 from omegaconf import DictConfig
 from src.training.train_pipeline import train
 
+
+# Monkey-patch for Hydra on Python 3.14
+try:
+    from hydra._internal.utils import LazyCompletionHelp
+    LazyCompletionHelp.__contains__ = lambda self, item: False
+except ImportError:
+    pass
+
 @hydra.main(version_base="1.3", config_path="../configs", config_name="train")
 def main(cfg: DictConfig):
     # Enforce Baseline V2 specifics according to directive
