@@ -46,8 +46,19 @@ class PreprocessedSkinLesionDataset(Dataset):
         self.metadata_history: list[tuple[str, PipelineMetadata | None]] = []
 
         if indices_csv_path:
-            indices_df = pd.read_csv(indices_csv_path, header=None, names=["image_id"])
+            indices_path = Path(indices_csv_path)
+            if not indices_path.exists():
+                raise RuntimeError(
+                    f"Split manifest file not found for mode '{mode}': {indices_path}. "
+                    f"Cannot proceed without explicit split manifests."
+                )
+            indices_df = pd.read_csv(indices_path, header=None, names=["image_id"])
             self.df = self.df.merge(indices_df, on="image_id", how="inner")
+        else:
+            logger.warning(
+                f"No indices_csv_path provided for mode '{mode}'. "
+                f"Loading ALL {len(self.df)} records. This is only safe for full-dataset preprocessing."
+            )
 
         self.records = self.df.to_dict("records")
         logger.info(

@@ -180,13 +180,26 @@ class SkinLesionLightningModule(pl.LightningModule):
         self.log("val/loss", loss, on_epoch=True, prog_bar=True)
         self.log("val/acc", self.val_acc, on_epoch=True, prog_bar=True)
         self.log("val/bal_acc", self.val_bal_acc, on_epoch=True)
-        self.log("val/auroc", self.val_auroc, on_epoch=True)
+        self.log("val/auroc", self.val_auroc, on_epoch=True, prog_bar=True)
         self.log("val/f1", self.val_f1, on_epoch=True)
         self.log("val/precision", self.val_precision, on_epoch=True)
         self.log("val/recall", self.val_recall, on_epoch=True)
         self.log("val/specificity", self.val_specificity, on_epoch=True)
         self.log("val/mcc", self.val_mcc, on_epoch=True)
         self.log("val/kappa", self.val_kappa, on_epoch=True)
+
+    def on_validation_epoch_end(self) -> None:
+        """Sanity check: stop training if AUROC is suspiciously zero while accuracy is nontrivial."""
+        auroc_val = self.trainer.callback_metrics.get("val/auroc")
+        acc_val = self.trainer.callback_metrics.get("val/acc")
+        if auroc_val is not None and acc_val is not None:
+            if self.current_epoch >= 1 and float(auroc_val) == 0.0 and float(acc_val) > 0.3:
+                logger.error(
+                    f"METRIC SANITY FAILURE at epoch {self.current_epoch}: "
+                    f"val_auroc={float(auroc_val):.4f} but val_acc={float(acc_val):.4f}. "
+                    f"This indicates a broken AUROC computation. STOPPING TRAINING."
+                )
+                self.trainer.should_stop = True
 
     def test_step(self, batch: tuple[torch.Tensor, torch.Tensor], batch_idx: int) -> None:
         loss, logits, y = self._shared_step(batch)

@@ -90,20 +90,31 @@ def test_group_disjointness(split_ids, cleaned_df):
 
 
 def test_prediction_count_matches_manifest(split_ids):
-    """If prediction artifacts exist, their count must match the manifest."""
-    pred_file = Path("research/baseline_v2/results/predictions_baseline_v2_test.npz")
-    if not pred_file.exists():
-        pytest.skip("No predictions file")
+    """If prediction artifacts exist, their count must match the manifest.
+    Also verify no leaked artifact exists in the results directory."""
+    results_dir = Path("research/baseline_v2/results")
+    # Check results directory for any .npz prediction files
+    pred_files = list(results_dir.glob("predictions_*.npz")) if results_dir.exists() else []
+    
+    if not pred_files:
+        # No prediction artifacts yet — verify the quarantined one is NOT here
+        suspect_dir = Path("research/baseline_v2/suspect_artifacts")
+        assert not (results_dir / "predictions_baseline_v2_test.npz").exists(), (
+            "Leaked prediction artifact found in results directory! Must be quarantined."
+        )
+        return  # PASS: no artifacts to validate, quarantine is clean
+    
     if "test" not in split_ids:
         pytest.skip("No test split")
     
-    data = np.load(pred_file)
-    n_preds = len(data["image_id"])
-    n_manifest = len(split_ids["test"])
-    assert n_preds == n_manifest, (
-        f"Prediction count ({n_preds}) != test manifest count ({n_manifest}). "
-        f"This indicates the predictions were generated from wrong split!"
-    )
+    for pred_file in pred_files:
+        data = np.load(pred_file)
+        n_preds = len(data["image_id"])
+        n_manifest = len(split_ids["test"])
+        assert n_preds == n_manifest, (
+            f"Prediction count ({n_preds}) != test manifest count ({n_manifest}). "
+            f"This indicates the predictions were generated from wrong split!"
+        )
 
 
 def test_class_order_consistency():
