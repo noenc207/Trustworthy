@@ -88,6 +88,17 @@ COST_MODEL_VERSION   = "v0"
 # Do NOT substitute cv2.resize(224) — that produces a max logit diff of ~3.5.
 _canonical_tf = _get_val_transforms(image_size=IMAGE_SIZE)
 
+# ── VIEW NORMALIZATION (for A1-A9 only) ───────────────────────────────────────
+# ViewGenerator.generate() already returns HWC RGB uint8 at IMAGE_SIZE×IMAGE_SIZE.
+# Do NOT re-apply Resize+CenterCrop on these — they are already cropped.
+# Only apply Normalize + ToTensorV2.
+import albumentations as A
+from albumentations.pytorch import ToTensorV2 as _ToTensorV2
+_view_normalize_tf = A.Compose([
+    A.Normalize(mean=NORMALIZE_MEAN, std=NORMALIZE_STD),
+    _ToTensorV2(),
+])
+
 
 # Canonical 10-action mapping (A0..A9)
 ACTIONS = [
@@ -353,8 +364,20 @@ def main():
         for a_idx, action in enumerate(ACTIONS):
             obs_tensors = []
             for i, raw_img in enumerate(raw_imgs):
-                view = view_gen.generate(raw_img, action)
-                obs_tensors.append(preprocess(view, already_rgb=True))
+                if action == ObservationAction.KEEP_FULL:
+                    # A0 — global_view: apply EXACT canonical pipeline to raw
+                    # image. DO NOT pass through ViewGenerator first — that would
+                    # pre-resize to 224×224, then _canonical_tf would do
+                    # Resize(291)→CenterCrop(224) on an already-small image.
+                    tensor = _canonical_tf(image=raw_img)["image"]
+                else:
+                    # A1-A9 — virtual views: ViewGenerator crops the raw image
+                    # and returns HWC RGB uint8 at IMAGE_SIZE×IMAGE_SIZE.
+                    # Apply only Normalize+ToTensorV2 (no re-cropping).
+                    view = view_gen.generate(raw_img, action)
+                    tensor = _view_normalize_tf(image=view)["image"]
+                obs_tensors.append(tensor)
+
 
             batch_tensor = torch.stack(obs_tensors).to(device)  # (bs, 3, H, W)
             with torch.no_grad():
