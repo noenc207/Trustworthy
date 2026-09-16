@@ -408,12 +408,15 @@ def main():
     print(f"  Max |logit diff|       : {max_logit_diff:.6f}")
     print(f"  Prediction agreement   : {pred_agree:.6f}")
 
-    # Cross-environment tolerance policy (see audit/PREPROCESSING_FORENSICS.md):
-    # - Same environment: 1e-4 achievable (deterministic GPU ops)
-    # - Cross-environment (Cloud Ubuntu vs Windows CUDA 12.1): up to 0.007 observed
-    #   due to bilinear interpolation differences between libopencv builds.
-    # - Prediction agreement remains the primary non-negotiable criterion.
-    LOGIT_TOL = 0.01  # Cross-environment tolerance; see forensics report
+    # Tolerance policy (see audit/PREPROCESSING_FORENSICS.md):
+    # - GPU inference (same CUDA device as canonical): achieves 0.000000 diff exactly
+    # - CPU inference: ~0.016 diff due to CPU vs GPU FP32 matmul differences
+    # - Canonical baseline WAS generated on GPU; this runner MUST run on GPU
+    # - 1e-4 is achievable and enforced when using CUDA
+    if not torch.cuda.is_available():
+        print("  [HALT] CUDA not available. A0 gate requires GPU (canonical was GPU-generated).")
+        sys.exit(1)
+    LOGIT_TOL = 1e-4
     if max_logit_diff > LOGIT_TOL:
         print(f"  [HALT] Logit difference {max_logit_diff:.6e} exceeds tolerance {LOGIT_TOL}")
         print("  The global_view preprocessing does NOT match canonical inference. Aborting.")
