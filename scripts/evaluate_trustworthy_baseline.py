@@ -26,9 +26,17 @@ def inference_engine(model, dataloader, device):
     model.eval()
     all_logits, all_probs, all_preds, all_confs, all_labels, all_ids = [], [], [], [], [], []
     
+    # Enable metadata return to get image_id
+    dataloader.dataset.return_metadata = True
+    
     with torch.no_grad():
         for batch in tqdm(dataloader, desc="Inference"):
-            images, labels, img_ids = batch["image"].to(device), batch["label"].to(device), batch["image_id"]
+            images, labels, records = batch
+            img_ids = records["image_id"]
+            
+            images = images.to(device)
+            labels = labels.to(device)
+            
             logits = model(images)
             probs = torch.softmax(logits, dim=-1)
             preds = probs.argmax(dim=-1)
@@ -167,7 +175,8 @@ def main():
         coverages.append(i / len(confs))
         risks.append(1.0 - np.mean(accs[sort_idx][:i]))
         
-    aurc = np.trapz(risks, coverages)
+    # For numpy >= 2.0 compatibility
+    aurc = np.trapezoid(risks, coverages) if hasattr(np, 'trapezoid') else np.trapz(risks, coverages)
     df_sel = pd.DataFrame({"coverage": coverages, "risk": risks})
     df_sel.to_csv(sel_dir / "risk_coverage.csv", index=False)
     
@@ -218,7 +227,8 @@ def main():
         for _ in tqdm(range(n_passes), desc="MC Passes"):
             pass_probs = []
             for batch in dm.test_dataloader():
-                imgs = batch["image"].to(device)
+                imgs, _, _ = batch
+                imgs = imgs.to(device)
                 probs = torch.softmax(model(imgs) / T_opt, dim=-1)
                 pass_probs.append(probs.cpu().numpy())
             mc_probs.append(np.concatenate(pass_probs))
