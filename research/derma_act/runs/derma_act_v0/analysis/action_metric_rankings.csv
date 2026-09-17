@@ -1,0 +1,10 @@
+rank,action_by_entropy_reduction,entropy_reduction,action_by_accuracy,accuracy_delta,action_by_confidence,delta_confidence,action_by_stability,prediction_flip_rate
+1,center_zoom,-0.01576596312224865,center_zoom,-0.008952794357026561,center_zoom,-0.004758554510772228,center_zoom,0.17227346717308736
+2,color_suppressed,-0.08132600039243698,left_region,-0.020618556701030855,color_suppressed,-0.032426867634058,color_suppressed,0.2135105805751492
+3,left_region,-0.10296576470136642,right_region,-0.03228431904503526,left_region,-0.04489883407950401,left_region,0.2908301682040152
+4,lower_region,-0.12315048277378082,color_suppressed,-0.033369506239826374,lower_region,-0.05738000199198723,artifact_suppressed,0.30683667932718395
+5,right_region,-0.1389918178319931,upper_region,-0.05236028214867061,right_region,-0.05924271047115326,right_region,0.3141616928920239
+6,upper_region,-0.14838752150535583,lower_region,-0.05480195333695059,artifact_suppressed,-0.05952931568026543,upper_region,0.3534997287032013
+7,artifact_suppressed,-0.15684902667999268,artifact_suppressed,-0.0908844275637547,upper_region,-0.06581521779298782,lower_region,0.3602821486706457
+8,border_zoom,-0.267696738243103,border_zoom,-0.17525773195876282,border_zoom,-0.11191893368959427,border_zoom,0.42674986435160067
+9,high_frequency_texture,-0.8518416881561279,high_frequency_texture,-0.5870862723819859,high_frequency_texture,-0.39318859577178955,high_frequency_texture,0.8974498100922409

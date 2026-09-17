@@ -51,7 +51,7 @@ diagnostic information beyond what is present in the original image.
 2. For each test image: load raw image, generate all 10 observations, run frozen classifier, release image.
 3. Verify A0 logit agreement with `test_canonical.npz` (tolerance 1e-4).
 4. Evaluate 6 fixed predetermined sequence policies (P0..P4 + full_observation_control).
-5. Evaluate model-based offline action-selection oracle (entropy criterion, no test labels).
+5. Evaluate minimum-entropy offline action-selection oracle (entropy criterion, no test labels).
 6. Compute per-action marginal effects, observation redundancy, counterfactual sensitivity.
 7. Produce risk-evidence curves and figures.
 
@@ -81,11 +81,11 @@ Cost for a sequence of K observations = K.
 | P3_global_texture | 2 | 2.0 | 0.6845 | 0.3155 |
 | P4_global_artifact | 2 | 2.0 | 0.6793 | 0.3207 |
 | P_ALL_full_observation_control | 10 | 10.0 | 0.7295 | 0.2705 |
-| model_based_offline_oracle_B1 | 2 | 2.0 | 0.7165 | 0.2835 |
+| minimum_entropy_offline_oracle_B1 | 2 | 2.0 | 0.7165 | 0.2835 |
 
 **Absolute classification-risk reduction vs Global:**
 - Global → fixed center: 0.0068
-- Global → model-based offline B1: 0.0244
+- Global → minimum-entropy offline B1: 0.0244
 - Global → full-observation control: 0.0374
 
 Note: `full_observation_control` is a descriptive control showing the behavior of indiscriminate mean aggregation across all predefined views. It is NOT a theoretical performance ceiling.
@@ -99,23 +99,25 @@ Naive averaging of all virtual views (full-observation control) improved classif
 
 This analysis distinguishes three core concepts: entropy reduction, classification improvement, and prediction stability.
 
-| Policy | Accuracy | Classification risk | Mean confidence | Mean entropy | Prediction flip rate |
+| Policy | Accuracy | Classification Risk | Mean Entropy | Mean Confidence | Prediction Flip Rate |
 |---|---|---|---|---|---|
-| global_view | 0.6921 | 0.3079 | 0.6680 | 0.9596 | - |
-| center_zoom | 0.6989 | 0.3011 | 0.6632 | 0.9754 | 0.172 |
-| border_zoom | 0.6763 | 0.3237 | 0.5560 | 1.2273 | 0.427 |
-| upper_region | 0.7187 | 0.2813 | 0.6022 | 1.1080 | 0.354 |
-| lower_region | 0.7181 | 0.2819 | 0.6106 | 1.0827 | 0.360 |
-| left_region | 0.7187 | 0.2813 | 0.6231 | 1.0626 | 0.291 |
-| right_region | 0.7198 | 0.2802 | 0.6088 | 1.0986 | 0.314 |
-| high_frequency_texture | 0.6845 | 0.3155 | 0.2748 | 1.8114 | 0.897 |
-| color_suppressed | 0.6858 | 0.3142 | 0.6356 | 1.0409 | 0.214 |
-| artifact_suppressed | 0.6793 | 0.3207 | 0.6085 | 1.1164 | 0.307 |
+| global_view | 0.6921 | 0.3079 | 0.9596 | 0.6680 | - |
+| center_zoom | 0.6989 | 0.3011 | 0.9754 | 0.6632 | 0.172 |
+| border_zoom | 0.6763 | 0.3237 | 1.2273 | 0.5560 | 0.427 |
+| upper_region | 0.7187 | 0.2813 | 1.1080 | 0.6022 | 0.354 |
+| lower_region | 0.7181 | 0.2819 | 1.0827 | 0.6106 | 0.360 |
+| left_region | 0.7187 | 0.2813 | 1.0626 | 0.6231 | 0.291 |
+| right_region | 0.7198 | 0.2802 | 1.0986 | 0.6088 | 0.314 |
+| high_frequency_texture | 0.6845 | 0.3155 | 1.8114 | 0.2748 | 0.897 |
+| color_suppressed | 0.6858 | 0.3142 | 1.0409 | 0.6356 | 0.214 |
+| artifact_suppressed | 0.6793 | 0.3207 | 1.1164 | 0.6085 | 0.307 |
 
-Action with largest entropy reduction: **high_frequency_texture** (mean $\Delta H = -0.8518$ using $H_{action} - H_{global}$).
+**Entropy Increase Phenomenon:**
+All predefined virtual observations increased mean predictive entropy relative to the global view, although several observations improved classification accuracy. This indicates that predictive entropy alone is not a reliable proxy for observation utility in this experiment.
 
-**Special Note on Texture:**
-The texture transformation produces a large reduction in predictive entropy according to the frozen classifier, while simultaneously reducing maximum predicted probability, lowering accuracy relative to global view, and causing a very high prediction-flip rate. This demonstrates that uncertainty metrics and decision quality can strongly disagree.
+**Action with smallest entropy increase:** `center_zoom` (+0.0158). It is simply the action with the smallest mean entropy increase among these observations, NOT an entropy-reducing action on average.
+
+**Action with largest entropy increase:** `high_frequency_texture` (+0.8518). With confidence = 0.2748, accuracy = 0.6845, and a flip rate = 0.897, this observation should be treated as an example of a highly destabilizing virtual transformation according to the evaluated prediction-stability metrics.
 
 ---
 
@@ -162,13 +164,13 @@ Most diverse pair (highest JS): global_view + high_frequency_texture (JS=0.2827)
 4. Cost model assigns uniform cost — real clinical costs vary by procedure.
 5. Results hold only for ISIC 2019, EfficientNet-B4, and the frozen `clean_run_001` checkpoint.
 6. No systematic literature review was performed; novelty claims are not made.
-7. The offline oracle evaluates all candidate observation predictions before selecting the best action. It demonstrates that some observations are more useful than others under a model-derived criterion, but it does NOT represent a deployable sequential active-acquisition policy.
+7. The minimum-entropy offline action-selection oracle evaluates all candidate observation predictions before selecting the best action. It demonstrates that some observations are more useful than others under a model-derived criterion, but it does NOT represent a deployable sequential active-acquisition policy.
 
 ---
 
 ## 12. Core Finding
 
-Different virtual observations have heterogeneous and sometimes conflicting effects on classification accuracy, predictive confidence, and prediction stability. An offline model-based action-selection procedure achieved higher accuracy than predefined fixed-view policies in this experiment, suggesting that evidence selection may be more important than indiscriminate evidence aggregation. Observation value is action-dependent and non-monotonic.
+The evaluated virtual transformations increased mean predictive entropy relative to the global view, with heterogeneous effects on classification accuracy and prediction stability. An offline minimum-entropy action-selection procedure achieved higher accuracy than predefined fixed-view policies in this experiment, suggesting that evidence selection may be more important than indiscriminate evidence aggregation. Observation value is action-dependent and non-monotonic.
 
 This provides empirical motivation to investigate a learned sequential next-best-observation policy in **DERMA-ACT V1** using a development/calibration split.
 
